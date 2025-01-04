@@ -1,0 +1,21 @@
+﻿@page "/"
+@page "/DepthFrom2D"
+
+<h3>Depth from 2D</h3>
+<p>
+    
+</p>
+<img width="480" src="@fileObjectUrl" style="min-width: 100px; min-height: 100px; border: 1px solid black;">
+<img width="480" src="@depthObjectUrl" style="min-width: 100px; min-height: 100px; border: 1px solid black;">
+<br />
+<a style="@(string.IsNullOrEmpty(outputFileName) && string.IsNullOrEmpty(depthObjectUrl) ? "display: none;" : "")" href="@depthObjectUrl" download="@outputFileName">@outputFileName</a>
+<br />
+<div>
+    <button onclick="@LoadDepthEstimationPipeline" disabled="@(busy || beenInit)">Load Depth Estimation Pipeline</button><br />
+    <button onclick="@LoadDepthEstimationPipelineWebGPU" disabled="@(busy || beenInit)">Load Depth Estimation Pipeline WebGPU</button><br/>
+    Select an image source.
+    <br />
+    <input @ref=fileInputRef accept="image/*" type="file" disabled="@(busy || !beenInit)" style="width: 100%;" />
+</div>
+<p>@((MarkupString)logMessage)</p>
+
