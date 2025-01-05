@@ -1,13 +1,17 @@
 ﻿using Microsoft.AspNetCore.Components;
 using SpawnDev.BlazorJS.JSObjects;
+using SpawnDev.BlazorJS.WebWorkers;
 using File = SpawnDev.BlazorJS.JSObjects.File;
 
 namespace SpawnDev.BlazorJS.TransformersJS.Demo.Pages
 {
-    public partial class DepthFrom2DTest
+    public partial class DepthFrom2DTestWorker
     {
         [Inject]
         BlazorJSRuntime JS { get; set; } = default!;
+
+        [Inject]
+        WebWorkerService WebWorkerService { get; set; } = default!;
 
         bool beenInit = false;
         bool busy = true;
@@ -19,6 +23,7 @@ namespace SpawnDev.BlazorJS.TransformersJS.Demo.Pages
         DepthEstimationPipeline? DepthEstimationPipeline = null;
         string? fileObjectUrl = null;
         string? depthObjectUrl = null;
+        WebWorker? worker = null;
 
         protected override async Task OnAfterRenderAsync(bool firstRender)
         {
@@ -27,7 +32,9 @@ namespace SpawnDev.BlazorJS.TransformersJS.Demo.Pages
                 fileInput = new HTMLInputElement(fileInputRef);
                 fileInput.OnChange += FileInput_OnChange;
                 Log($"Pipelines initializing... ", false);
+                worker = WebWorkerService.GetWebWorkerSync();
                 Pipelines = await Pipelines.Init();
+                await worker!.WhenReady;
                 Log($"Done");
                 busy = false;
                 StateHasChanged();
@@ -40,7 +47,7 @@ namespace SpawnDev.BlazorJS.TransformersJS.Demo.Pages
             try
             {
                 Log($"Depth Estimation Pipeline loading... ", false);
-                DepthEstimationPipeline = await Pipelines.DepthEstimationPipeline(DepthAnythingV2Small);
+                DepthEstimationPipeline = await Pipelines.DepthEstimationPipeline();
                 Log($"Done");
             }
             catch
@@ -51,9 +58,12 @@ namespace SpawnDev.BlazorJS.TransformersJS.Demo.Pages
             busy = false;
             StateHasChanged();
         }
-        const string DepthAnythingV2Small = "onnx-community/depth-anything-v2-small";
-        const string DepthAnythingV2Large = "onnx-community/depth-anything-v2-large";
-        const string DepthAnythingSmallHf = "Xenova/depth-anything-small-hf";
+        void Pipeline_OnProgress(JSObject obj)
+        {
+            JS.Log("Pipeline_OnProgress", obj);
+            JS.Set("Pipeline_OnProgress", obj);
+        }
+        ActionCallback<JSObject> OnProgress => new ActionCallback<JSObject>(Pipeline_OnProgress);
         async Task LoadDepthEstimationPipelineWebGPU()
         {
             if (Pipelines == null) return;
@@ -61,7 +71,7 @@ namespace SpawnDev.BlazorJS.TransformersJS.Demo.Pages
             try
             {
                 Log($"Depth Estimation Pipeline with WebGPU loading... ", false);
-                DepthEstimationPipeline = await Pipelines.DepthEstimationPipeline(DepthAnythingV2Small, new PipelineOptions { Device = "webgpu"});
+                DepthEstimationPipeline = await Pipelines.DepthEstimationPipeline(pipelineOptions: new PipelineOptions { Device = "webgpu", OnProgress = OnProgress });
                 Log($"Done");
             }
             catch

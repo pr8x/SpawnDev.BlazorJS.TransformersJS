@@ -6,9 +6,15 @@ namespace SpawnDev.BlazorJS.TransformersJS
     {
         /// <summary>
         /// Possible options:<br/>
-        /// "webgpu"
+        /// "webgpu"<br/>
+        /// "webgl"
+        /// "webnn"
         /// </summary>
         [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
         public string? Device { get; set; }
+
+
+        [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+        public ActionCallback<JSObject>? OnProgress { get; set; }
     }
 }
