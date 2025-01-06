@@ -1,5 +1,6 @@
 ﻿using Microsoft.AspNetCore.Components;
 using SpawnDev.BlazorJS.JSObjects;
+using SpawnDev.BlazorJS.WebWorkers;
 using File = SpawnDev.BlazorJS.JSObjects.File;
 
 namespace SpawnDev.BlazorJS.TransformersJS.Demo.Pages
@@ -8,6 +9,9 @@ namespace SpawnDev.BlazorJS.TransformersJS.Demo.Pages
     {
         [Inject]
         BlazorJSRuntime JS { get; set; } = default!;
+
+        [Inject]
+        WebWorkerService WebWorkerService { get; set; } = default!;
 
         bool beenInit = false;
         bool busy = true;
@@ -95,6 +99,36 @@ namespace SpawnDev.BlazorJS.TransformersJS.Demo.Pages
             }
             StateHasChanged();
         }
+        async Task<string> Create2DZDataUrl(string rgbSource)
+        {
+            if (Pipelines == null)
+            {
+                Pipelines = await Pipelines.Init();
+            }
+            if (DepthEstimationPipeline != null)
+            {
+                DepthEstimationPipeline = await Pipelines.DepthEstimationPipeline(DepthAnythingV2Small, new PipelineOptions { Device = "webgpu" });
+            }
+            var rgbImage = await HTMLImageElement.CreateFromImageAsync(rgbSource);
+            using var depthResult = await DepthEstimationPipeline!.Call(rgbSource);
+            using var depthInfo = depthResult.Depth;
+            using var depthMapData = depthInfo.Data;
+            var rgbWidth = depthInfo.Width;
+            var rgbHeight = depthInfo.Height;
+            var outWidth = rgbWidth * 2;
+            var outHeight = rgbHeight;
+            var grayscaleDataBytes = depthMapData.ReadBytes();
+            var rgbaBytes = GrayscaleToRGBA(grayscaleDataBytes, rgbWidth, rgbHeight);
+            using var canvas = new HTMLCanvasElement(outWidth, outHeight);
+            using var ctx = canvas.Get2DContext();
+            // draw rgb image
+            ctx.DrawImage(rgbImage);
+            // draw depth map
+            ctx.PutImageBytes(rgbaBytes, rgbWidth, rgbHeight, rgbWidth, 0);
+            using var blob = await canvas.ToBlobAsync("image/png");
+            var ret = URL.CreateObjectURL(blob);
+            return ret;
+        }
         string CreateDepthImageDataUrl(Uint8Array grayscaleData, int width, int height)
         {
             var grayscaleDataBytes = grayscaleData.ReadBytes();
@@ -133,15 +167,19 @@ namespace SpawnDev.BlazorJS.TransformersJS.Demo.Pages
             }
             Log("Creating image data url... ", false);
             fileObjectUrl = await FileReader.ReadAsDataURLAsync(file);
+            var ext = file.Name.Split('.').Last();
+            var filenameBase = file.Name.Substring(0, file.Name.Length - ext.Length - 1);
+            outputFileName = $"{filenameBase}.2DZ.{ext}";
             Log("Done");
             StateHasChanged();
             try
             {
                 Log("Estimating depth... ", false);
-                using var depthResult = await DepthEstimationPipeline!.Call(fileObjectUrl!);
-                using var depthInfo = depthResult.Depth;
-                using var depthMapData = depthInfo.Data;
-                depthObjectUrl = CreateDepthImageDataUrl(depthMapData, depthInfo.Width, depthInfo.Height);
+                //using var depthResult = await DepthEstimationPipeline!.Call(fileObjectUrl!);
+                //using var depthInfo = depthResult.Depth;
+                //using var depthMapData = depthInfo.Data;
+                //depthObjectUrl = CreateDepthImageDataUrl(depthMapData, depthInfo.Width, depthInfo.Height);
+                depthObjectUrl = await Create2DZDataUrl(fileObjectUrl!);
                 Log("Done");
             }
             catch (Exception ex)
