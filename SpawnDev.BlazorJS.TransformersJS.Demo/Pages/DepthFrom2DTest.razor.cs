@@ -1,6 +1,9 @@
 ﻿using Microsoft.AspNetCore.Components;
 using SpawnDev.BlazorJS.JSObjects;
 using SpawnDev.BlazorJS.WebWorkers;
+using static System.Runtime.InteropServices.JavaScript.JSType;
+using System.Reflection.Metadata;
+using System;
 using File = SpawnDev.BlazorJS.JSObjects.File;
 
 namespace SpawnDev.BlazorJS.TransformersJS.Demo.Pages
@@ -18,12 +21,38 @@ namespace SpawnDev.BlazorJS.TransformersJS.Demo.Pages
         string logMessage = "";
         ElementReference fileInputRef;
         HTMLInputElement? fileInput;
-        string outputFileName = "depthmap.png";
+        string outputFileName = "";
         Pipelines? Pipelines = null;
         DepthEstimationPipeline? DepthEstimationPipeline = null;
+        File? File = null;
         string? fileObjectUrl = null;
+        string? resultObjectUrl = null;
         string? depthObjectUrl = null;
+        string depthFileName = "";
+        Dictionary<string, ModelLoadProgress> ModelProgresses = new();
 
+        void DownloadDepthmap()
+        {
+            if (string.IsNullOrEmpty(depthObjectUrl)) return;
+            if (string.IsNullOrEmpty(depthFileName)) return;
+            DownloadFile(depthObjectUrl, depthFileName);
+        }
+        void Download2DZImage()
+        {
+            if (string.IsNullOrEmpty(resultObjectUrl)) return;
+            if (string.IsNullOrEmpty(outputFileName)) return;
+            DownloadFile(resultObjectUrl, outputFileName);
+        }
+        void DownloadFile(string url, string filename)
+        {
+            using var document = JS.GetDocument();
+            using var a = document!.CreateElement<HTMLAnchorElement>("a");
+            a.Href = url;
+            a.Download = filename;
+            document.Body!.AppendChild(a);
+            a.Click();
+            document.Body.RemoveChild(a);
+        }
         protected override async Task OnAfterRenderAsync(bool firstRender)
         {
             if (!beenInit && fileInput == null)
@@ -35,7 +64,6 @@ namespace SpawnDev.BlazorJS.TransformersJS.Demo.Pages
                 StateHasChanged();
             }
         }
-        Dictionary<string, ModelLoadProgress> ModelProgresses = new();
         void Pipeline_OnProgress(ModelLoadProgress obj)
         {
             if (ModelProgresses.TryGetValue(obj.File, out var progress))
@@ -48,10 +76,6 @@ namespace SpawnDev.BlazorJS.TransformersJS.Demo.Pages
             else
             {
                 ModelProgresses[obj.File] = obj;
-            }
-            if (obj.Status == "done")
-            {
-                ModelProgresses.Remove(obj.File);
             }
             StateHasChanged();
         }
@@ -77,7 +101,7 @@ namespace SpawnDev.BlazorJS.TransformersJS.Demo.Pages
             ModelKey = key;
             if (Pipelines == null)
             {
-                Log($"Pipelines initializing... ", false);
+                Log($"Initializing... ", false);
                 Pipelines = await Pipelines.Init();
                 Log($"Done");
             }
@@ -94,6 +118,7 @@ namespace SpawnDev.BlazorJS.TransformersJS.Demo.Pages
                 {
                     Log($"Error");
                 }
+                ModelProgresses.Clear();
             }
             DepthEstimationPipeline = pipeline;
             if (DepthEstimationPipeline != null && !string.IsNullOrEmpty(fileObjectUrl) && File != null)
@@ -107,13 +132,17 @@ namespace SpawnDev.BlazorJS.TransformersJS.Demo.Pages
             busy = false;
             StateHasChanged();
         }
-        
         async void FileInput_OnChange(Event ev)
         {
             if (!string.IsNullOrEmpty(fileObjectUrl))
             {
                 URL.RevokeObjectURL(fileObjectUrl);
                 fileObjectUrl = null;
+            }
+            if (!string.IsNullOrEmpty(resultObjectUrl))
+            {
+                URL.RevokeObjectURL(resultObjectUrl);
+                resultObjectUrl = null;
             }
             if (!string.IsNullOrEmpty(depthObjectUrl))
             {
@@ -130,9 +159,11 @@ namespace SpawnDev.BlazorJS.TransformersJS.Demo.Pages
             busy = true;
             StateHasChanged();
             fileObjectUrl = await FileReader.ReadAsDataURLAsync(File);
+            var outputFormatExt = "png";
             var ext = File.Name.Split('.').Last();
             var filenameBase = File.Name.Substring(0, File.Name.Length - ext.Length - 1);
-            outputFileName = $"{filenameBase}.2DZ.{ext}";
+            outputFileName = $"{filenameBase}.2DZ.{outputFormatExt}";
+            depthFileName = $"{filenameBase}.Z.{outputFormatExt}";
             busy = false;
             StateHasChanged();
         }
@@ -148,40 +179,56 @@ namespace SpawnDev.BlazorJS.TransformersJS.Demo.Pages
             }
             StateHasChanged();
         }
-        async Task<string> Create2DZDataUrl(string rgbSource)
+        async Task ProcessSelectedFile()
         {
-            var rgbImage = await HTMLImageElement.CreateFromImageAsync(rgbSource);
-            using var depthResult = await DepthEstimationPipeline!.Call(rgbSource);
+            if (!string.IsNullOrEmpty(resultObjectUrl))
+            {
+                URL.RevokeObjectURL(resultObjectUrl);
+                resultObjectUrl = null;
+            }
+            if (!string.IsNullOrEmpty(depthObjectUrl))
+            {
+                URL.RevokeObjectURL(depthObjectUrl);
+                depthObjectUrl = null;
+            }
+            StateHasChanged();
+            var rgbImage = await HTMLImageElement.CreateFromImageAsync(fileObjectUrl);
+            using var depthResult = await DepthEstimationPipeline!.Call(fileObjectUrl);
             using var depthInfo = depthResult.Depth;
             using var depthMapData = depthInfo.Data;
             var rgbWidth = depthInfo.Width;
             var rgbHeight = depthInfo.Height;
-            var outWidth = rgbWidth * 2;
-            var outHeight = rgbHeight;
-            var grayscaleDataBytes = depthMapData.ReadBytes();
-            var rgbaBytes = GrayscaleToRGBA(grayscaleDataBytes, rgbWidth, rgbHeight);
+            resultObjectUrl = await Create2DZDataUrl(rgbImage, depthMapData, rgbWidth, rgbHeight);
+            depthObjectUrl = await CreateDepthImageDataUrl(depthMapData, rgbWidth, rgbHeight);
+        }
+        async Task<string> Create2DZDataUrl(HTMLImageElement rgbImage, Uint8Array grayscale1BPPData, int width, int height)
+        {
+            var outWidth = width * 2;
+            var outHeight = height;
+            var grayscaleDataBytes = grayscale1BPPData.ReadBytes();
+            var depthmapRGBABytes = Grayscale1BPPToRGBA(grayscaleDataBytes, width, height);
             using var canvas = new HTMLCanvasElement(outWidth, outHeight);
             using var ctx = canvas.Get2DContext();
             // draw rgb image
             ctx.DrawImage(rgbImage);
             // draw depth map
-            ctx.PutImageBytes(rgbaBytes, rgbWidth, rgbHeight, rgbWidth, 0);
+            ctx.PutImageBytes(depthmapRGBABytes, width, height, width, 0);
             using var blob = await canvas.ToBlobAsync("image/png");
             var ret = URL.CreateObjectURL(blob);
             return ret;
         }
-        async Task<string> CreateDepthImageDataUrl(Uint8Array grayscaleData, int width, int height)
+        async Task<string> CreateDepthImageDataUrl(Uint8Array grayscale1BPPData, int width, int height)
         {
-            var grayscaleDataBytes = grayscaleData.ReadBytes();
-            var rgbaBytes = GrayscaleToRGBA(grayscaleDataBytes, width, height);
+            var grayscaleDataBytes = grayscale1BPPData.ReadBytes();
+            var depthmapRGBABytes = Grayscale1BPPToRGBA(grayscaleDataBytes, width, height);
             using var canvas = new HTMLCanvasElement(width, height);
             using var ctx = canvas.Get2DContext();
-            ctx.PutImageBytes(rgbaBytes, width, height);
+            ctx.PutImageBytes(depthmapRGBABytes, width, height);
             using var blob = await canvas.ToBlobAsync("image/png");
             var ret = URL.CreateObjectURL(blob);
             return ret;
         }
-        byte[] GrayscaleToRGBA(byte[] grayscaleData, int width, int height)
+        byte[] Grayscale1BPPToRGBA(byte[] grayscaleData, int width, int height)
         {
             var ret = new byte[width * height * 4];
             for (var i = 0; i < grayscaleData.Length; i++)
@@ -194,24 +241,14 @@ namespace SpawnDev.BlazorJS.TransformersJS.Demo.Pages
             }
             return ret;
         }
-        File? File = null;
         async Task ProcessFile()
         {
-            if (!string.IsNullOrEmpty(depthObjectUrl))
-            {
-                URL.RevokeObjectURL(depthObjectUrl);
-                depthObjectUrl = null;
-            }
             busy = true;
             StateHasChanged();
             try
             {
                 Log("Estimating depth... ", false);
-                //using var depthResult = await DepthEstimationPipeline!.Call(fileObjectUrl!);
-                //using var depthInfo = depthResult.Depth;
-                //using var depthMapData = depthInfo.Data;
-                //depthObjectUrl = CreateDepthImageDataUrl(depthMapData, depthInfo.Width, depthInfo.Height);
-                depthObjectUrl = await Create2DZDataUrl(fileObjectUrl!);
+                await ProcessSelectedFile();
                 Log("Done");
             }
             catch (Exception ex)
@@ -233,10 +270,10 @@ namespace SpawnDev.BlazorJS.TransformersJS.Demo.Pages
                 URL.RevokeObjectURL(fileObjectUrl);
                 fileObjectUrl = null;
             }
-            if (!string.IsNullOrEmpty(depthObjectUrl))
+            if (!string.IsNullOrEmpty(resultObjectUrl))
             {
-                URL.RevokeObjectURL(depthObjectUrl);
-                depthObjectUrl = null;
+                URL.RevokeObjectURL(resultObjectUrl);
+                resultObjectUrl = null;
             }
             beenInit = false;
         }

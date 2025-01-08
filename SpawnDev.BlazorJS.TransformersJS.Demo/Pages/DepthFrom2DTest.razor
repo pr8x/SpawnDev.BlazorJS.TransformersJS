@@ -18,17 +18,20 @@
         <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Normal" JustifyContent="JustifyContent.Left" Gap="0.5rem" Style="padding: 1rem 0;">
             <button onclick="@RunIt" disabled="@(busy || !beenInit || File == null)">Create 2D+Z Image</button>
         </RadzenStack>
+        <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Normal" JustifyContent="JustifyContent.Left" Gap="0.5rem" Style="padding: 1rem 0;">
+            <button onclick="@Download2DZImage" disabled="@(busy || !beenInit || File == null || string.IsNullOrEmpty(resultObjectUrl))">Download 2D+Z Image: @(outputFileName)</button>
+            <button onclick="@DownloadDepthmap" disabled="@(busy || !beenInit || File == null || string.IsNullOrEmpty(depthObjectUrl))">Download Depthmap Image: @(depthFileName)</button>
+        </RadzenStack>
     </div>
-    <div>
+    <div style="padding: 0.5rem 0;">
         <ModelLoadView ModelProgresses="@ModelProgresses" />
     </div>
-    <div>
-        <img width="480" src="@fileObjectUrl" style="min-width: 100px; min-height: 100px; border: 1px solid black; @(string.IsNullOrEmpty(fileObjectUrl) || !string.IsNullOrEmpty(depthObjectUrl) ? "display: none;" : "")">
-        <img width="960" src="@depthObjectUrl" style="min-width: 100px; min-height: 100px; border: 1px solid black; @(string.IsNullOrEmpty(depthObjectUrl) ? "display: none;" : "")">
-        <br />
-        <a style="@(string.IsNullOrEmpty(outputFileName) || string.IsNullOrEmpty(depthObjectUrl) ? "display: none;" : "")" href="@depthObjectUrl" download="@outputFileName">@outputFileName</a>
-        <br />
+    <div style="padding: 0.5rem 0;">
+        <img width="480" src="@fileObjectUrl" style="min-width: 100px; min-height: 100px; border: 1px solid black; @(string.IsNullOrEmpty(fileObjectUrl) || !string.IsNullOrEmpty(resultObjectUrl) ? "display: none;" : "")">
+        <img width="960" src="@resultObjectUrl" style="min-width: 100px; min-height: 100px; border: 1px solid black; @(string.IsNullOrEmpty(resultObjectUrl) ? "display: none;" : "")">
     </div>
-    <p>@((MarkupString)logMessage)</p>
+    <div style="padding: 0.5rem 0;">
+        @((MarkupString)logMessage)
+    </div>
 </div>
 
