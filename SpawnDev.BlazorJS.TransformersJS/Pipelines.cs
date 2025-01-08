@@ -24,6 +24,7 @@ namespace SpawnDev.BlazorJS.TransformersJS
         /// <param name="_ref"></param>
         public Pipelines(IJSInProcessObjectReference _ref) : base(_ref) { }
         public static bool IsInit => !JS.IsUndefined("Pipelines");
+        
         public static async Task<Pipelines> Init(string? srcUrl = null)
         {
             // var transformersModule = await import('https://cdn.jsdelivr.net/npm/@huggingface/transformers')
@@ -61,9 +62,11 @@ namespace SpawnDev.BlazorJS.TransformersJS
         //"zero-shot-audio-classification": will return a ZeroShotAudioClassificationPipeline.
         //"zero-shot-image-classification": will return a ZeroShotImageClassificationPipeline.
         //"zero-shot-object-detection": will return a ZeroShotObjectDetectionPipeline.
-        public static Task<TPipeline> Pipeline<TPipeline>(string type, string? source = null, PipelineOptions? pipelineOptions = null) where TPipeline : Pipeline 
-            => pipelineOptions == null ? JS.CallAsync<TPipeline>("Pipelines.pipeline", type, source) : JS.CallAsync<TPipeline>("Pipelines.pipeline", type, source, pipelineOptions);
+        public static Task<TPipeline> Pipeline<TPipeline>(string task, string? model = null, PipelineOptions? pipelineOptions = null) where TPipeline : Pipeline 
+            => pipelineOptions == null ? JS.CallAsync<TPipeline>("Pipelines.pipeline", task, model) : JS.CallAsync<TPipeline>("Pipelines.pipeline", task, model, pipelineOptions);
+        public static Task<TPipeline> Pipeline2<TPipeline>(string task, string? model = null, PipelineOptions? pipelineOptions = null) 
+    => pipelineOptions == null ? JS.CallAsync<TPipeline>("Pipelines.pipeline", task, model) : JS.CallAsync<TPipeline>("Pipelines.pipeline", task, model, pipelineOptions);
 
-        public Task<DepthEstimationPipeline> DepthEstimationPipeline(string? source = null, PipelineOptions? pipelineOptions = null) => Pipeline<DepthEstimationPipeline>("depth-estimation", source, pipelineOptions);
+        public Task<DepthEstimationPipeline> DepthEstimationPipeline(string? model = null, PipelineOptions? pipelineOptions = null) => Pipeline<DepthEstimationPipeline>("depth-estimation", model, pipelineOptions);
     }
 }

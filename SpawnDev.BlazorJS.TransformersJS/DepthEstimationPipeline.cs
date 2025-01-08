@@ -16,4 +16,5 @@ namespace SpawnDev.BlazorJS.TransformersJS
 
         public Task<DepthEstimationResult> Call(string source) => _Call<DepthEstimationResult>(source);
     }
+
 }
