@@ -9,11 +9,16 @@
 	<ItemGroup>
 		<PackageReference Include="Microsoft.AspNetCore.Components.WebAssembly" Version="8.0.11" />
 		<PackageReference Include="Microsoft.AspNetCore.Components.WebAssembly.DevServer" Version="8.0.11" PrivateAssets="all" />
-		<PackageReference Include="SpawnDev.BlazorJS.WebWorkers" Version="2.5.34" />
+		<PackageReference Include="SpawnDev.BlazorJS.WebWorkers" Version="2.5.35" />
+		<PackageReference Include="Radzen.Blazor" Version="5.2.10" />
 	</ItemGroup>
 
 	<ItemGroup>
 		<ProjectReference Include="..\SpawnDev.BlazorJS.TransformersJS\SpawnDev.BlazorJS.TransformersJS.csproj" />
+	</ItemGroup>
+
+	<ItemGroup>
+	  <Folder Include="Services\" />
 	</ItemGroup>
 
 </Project>

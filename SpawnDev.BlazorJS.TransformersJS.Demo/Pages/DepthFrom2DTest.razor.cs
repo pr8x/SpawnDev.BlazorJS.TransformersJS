@@ -28,64 +28,113 @@ namespace SpawnDev.BlazorJS.TransformersJS.Demo.Pages
         {
             if (!beenInit && fileInput == null)
             {
+                beenInit = true;
                 fileInput = new HTMLInputElement(fileInputRef);
                 fileInput.OnChange += FileInput_OnChange;
-                Log($"Pipelines initializing... ", false);
-                Pipelines = await Pipelines.Init();
-                Log($"Done");
                 busy = false;
                 StateHasChanged();
             }
         }
-        async Task LoadDepthEstimationPipeline()
+        Dictionary<string, ModelLoadProgress> ModelProgresses = new();
+        void Pipeline_OnProgress(ModelLoadProgress obj)
         {
-            if (Pipelines == null) return;
-            busy = true;
-            try
+            if (ModelProgresses.TryGetValue(obj.File, out var progress))
             {
-                Log($"Depth Estimation Pipeline loading... ", false);
-                DepthEstimationPipeline = await Pipelines.DepthEstimationPipeline(DepthAnythingV2Small);
+                progress.Status = obj.Status;
+                if (obj.Progress != null) progress.Progress = obj.Progress;
+                if (obj.Total != null) progress.Total = obj.Total;
+                if (obj.Loaded != null) progress.Loaded = obj.Loaded;
+            }
+            else
+            {
+                ModelProgresses[obj.File] = obj;
+            }
+            if (obj.Status == "done")
+            {
+                ModelProgresses.Remove(obj.File);
+            }
+            StateHasChanged();
+        }
+        ActionCallback<ModelLoadProgress> OnProgress => new ActionCallback<ModelLoadProgress>(Pipeline_OnProgress);
+        string SelectedModel = Models.First();
+        bool UseWebGPU = true;
+        static List<string> Models = new List<string>
+        {
+            "onnx-community/depth-anything-v2-small",
+            //"onnx-community/DepthPro-ONNX",
+            "Xenova/depth-anything-small-hf",
+            //"Xenova/dpt-hybrid-midas",
+        };
+        string ModelKey = "";
+        Dictionary<string, DepthEstimationPipeline> DepthEstimationPipelines = new Dictionary<string, DepthEstimationPipeline>();
+        async Task RunIt()
+        {
+            if (busy) return;
+            var key = UseWebGPU ? $"{SelectedModel}+webgpu" : SelectedModel;
+            DepthEstimationPipeline = null;
+            busy = true;
+            StateHasChanged();
+            ModelKey = key;
+            if (Pipelines == null)
+            {
+                Log($"Pipelines initializing... ", false);
+                Pipelines = await Pipelines.Init();
                 Log($"Done");
             }
-            catch
+            if (!DepthEstimationPipelines.TryGetValue(key, out var pipeline))
             {
-                Log($"Error");
+                try
+                {
+                    Log($"Depth Estimation Pipeline with WebGPU loading... ", false);
+                    pipeline = await Pipelines.DepthEstimationPipeline(SelectedModel, new PipelineOptions { Device = UseWebGPU ? "webgpu" : null, OnProgress = OnProgress });
+                    DepthEstimationPipelines[key] = pipeline;
+                    Log($"Done");
+                }
+                catch
+                {
+                    Log($"Error");
+                }
             }
-            beenInit = true;
+            DepthEstimationPipeline = pipeline;
+            if (DepthEstimationPipeline != null && !string.IsNullOrEmpty(fileObjectUrl) && File != null)
+            {
+                try
+                {
+                    await ProcessFile();
+                }
+                catch { }
+            }
             busy = false;
             StateHasChanged();
         }
-        const string DepthAnythingV2Small = "onnx-community/depth-anything-v2-small";
-        const string DepthAnythingV2Large = "onnx-community/depth-anything-v2-large";
-        const string DepthAnythingSmallHf = "Xenova/depth-anything-small-hf";
-        async Task LoadDepthEstimationPipelineWebGPU()
-        {
-            if (Pipelines == null) return;
-            busy = true;
-            try
-            {
-                Log($"Depth Estimation Pipeline with WebGPU loading... ", false);
-                DepthEstimationPipeline = await Pipelines.DepthEstimationPipeline(DepthAnythingV2Small, new PipelineOptions { Device = "webgpu"});
-                Log($"Done");
-            }
-            catch
-            {
-                Log($"Error");
-            }
-            beenInit = true;
-            busy = false;
-            StateHasChanged();
-        }
+        
         async void FileInput_OnChange(Event ev)
         {
-            using var files = fileInput!.Files;
-            using var file = files?.FirstOrDefault();
-            if (file == null) return;
-            try
+            if (!string.IsNullOrEmpty(fileObjectUrl))
             {
-                await ProcessFile(file);
+                URL.RevokeObjectURL(fileObjectUrl);
+                fileObjectUrl = null;
             }
-            catch { }
+            if (!string.IsNullOrEmpty(depthObjectUrl))
+            {
+                URL.RevokeObjectURL(depthObjectUrl);
+                depthObjectUrl = null;
+            }
+            File?.Dispose();
+            using var Files = fileInput!.Files;
+            File = Files!.FirstOrDefault();
+            if (File == null)
+            {
+                return;
+            }
+            busy = true;
+            StateHasChanged();
+            fileObjectUrl = await FileReader.ReadAsDataURLAsync(File);
+            var ext = File.Name.Split('.').Last();
+            var filenameBase = File.Name.Substring(0, File.Name.Length - ext.Length - 1);
+            outputFileName = $"{filenameBase}.2DZ.{ext}";
+            busy = false;
+            StateHasChanged();
         }
         void Log(string msg, bool newLine = true)
         {
@@ -101,14 +150,6 @@ namespace SpawnDev.BlazorJS.TransformersJS.Demo.Pages
         }
         async Task<string> Create2DZDataUrl(string rgbSource)
         {
-            if (Pipelines == null)
-            {
-                Pipelines = await Pipelines.Init();
-            }
-            if (DepthEstimationPipeline != null)
-            {
-                DepthEstimationPipeline = await Pipelines.DepthEstimationPipeline(DepthAnythingV2Small, new PipelineOptions { Device = "webgpu" });
-            }
             var rgbImage = await HTMLImageElement.CreateFromImageAsync(rgbSource);
             using var depthResult = await DepthEstimationPipeline!.Call(rgbSource);
             using var depthInfo = depthResult.Depth;
@@ -129,14 +170,16 @@ namespace SpawnDev.BlazorJS.TransformersJS.Demo.Pages
             var ret = URL.CreateObjectURL(blob);
             return ret;
         }
-        string CreateDepthImageDataUrl(Uint8Array grayscaleData, int width, int height)
+        async Task<string> CreateDepthImageDataUrl(Uint8Array grayscaleData, int width, int height)
         {
             var grayscaleDataBytes = grayscaleData.ReadBytes();
             var rgbaBytes = GrayscaleToRGBA(grayscaleDataBytes, width, height);
             using var canvas = new HTMLCanvasElement(width, height);
             using var ctx = canvas.Get2DContext();
             ctx.PutImageBytes(rgbaBytes, width, height);
-            return canvas.ToDataURL("image/png");
+            using var blob = await canvas.ToBlobAsync("image/png");
+            var ret = URL.CreateObjectURL(blob);
+            return ret;
         }
         byte[] GrayscaleToRGBA(byte[] grayscaleData, int width, int height)
         {
@@ -151,26 +194,15 @@ namespace SpawnDev.BlazorJS.TransformersJS.Demo.Pages
             }
             return ret;
         }
-        async Task ProcessFile(File file)
+        File? File = null;
+        async Task ProcessFile()
         {
-            busy = true;
-            StateHasChanged();
-            if (!string.IsNullOrEmpty(fileObjectUrl))
-            {
-                URL.RevokeObjectURL(fileObjectUrl);
-                fileObjectUrl = null;
-            }
             if (!string.IsNullOrEmpty(depthObjectUrl))
             {
                 URL.RevokeObjectURL(depthObjectUrl);
                 depthObjectUrl = null;
             }
-            Log("Creating image data url... ", false);
-            fileObjectUrl = await FileReader.ReadAsDataURLAsync(file);
-            var ext = file.Name.Split('.').Last();
-            var filenameBase = file.Name.Substring(0, file.Name.Length - ext.Length - 1);
-            outputFileName = $"{filenameBase}.2DZ.{ext}";
-            Log("Done");
+            busy = true;
             StateHasChanged();
             try
             {

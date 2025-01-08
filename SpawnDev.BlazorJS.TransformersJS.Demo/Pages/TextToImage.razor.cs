@@ -1,11 +1,14 @@
 ﻿using Microsoft.AspNetCore.Components;
+using Microsoft.AspNetCore.Components.Forms;
+using Microsoft.Extensions.Options;
 using SpawnDev.BlazorJS.JSObjects;
 using SpawnDev.BlazorJS.WebWorkers;
 using File = SpawnDev.BlazorJS.JSObjects.File;
 
+
 namespace SpawnDev.BlazorJS.TransformersJS.Demo.Pages
 {
-    public partial class DepthFrom2DTestWorker
+    public partial class TextToImage
     {
         [Inject]
         BlazorJSRuntime JS { get; set; } = default!;
@@ -13,85 +16,130 @@ namespace SpawnDev.BlazorJS.TransformersJS.Demo.Pages
         [Inject]
         WebWorkerService WebWorkerService { get; set; } = default!;
 
+        public string TextBoxValue { get; set; } = "";
+
         bool beenInit = false;
-        bool busy = true;
+        bool busy = false;
         string logMessage = "";
-        ElementReference fileInputRef;
-        HTMLInputElement? fileInput;
         string outputFileName = "depthmap.png";
         Pipelines? Pipelines = null;
-        DepthEstimationPipeline? DepthEstimationPipeline = null;
-        string? fileObjectUrl = null;
+        //DepthEstimationPipeline? DepthEstimationPipeline = null;
         string? depthObjectUrl = null;
-        WebWorker? worker = null;
 
+        async Task ProcessText()
+        {
+            var inputText = "A cute and adorable baby fox with big brown eyes, autumn leaves in the background enchanting,immortal,fluffy, shiny mane,Petals,fairyism,unreal engine 5 and Octane Render,highly detailed, photorealistic, cinematic, natural colors.";
+            var conversation = new { Role = "User", Content = inputText };
+            //var inputs = await processor.Call(conversation, new { chat_template = "text_to_image" });
+            //var numImageTokens = processor.NumImageTokens;
+            //var outputs = await model.GenerateImages
+        }
+
+        Dictionary<string, ModelLoadProgress> ModelProgresses = new();
+        void Pipeline_OnProgress(ModelLoadProgress obj)
+        {
+            var key = $"";
+            if (ModelProgresses.TryGetValue(obj.File, out var progress))
+            {
+                progress.Status = obj.Status;
+                if (obj.Progress != null) progress.Progress = obj.Progress;
+                if (obj.Total != null) progress.Total = obj.Total;
+                if (obj.Loaded != null) progress.Loaded = obj.Loaded;
+            }
+            else
+            {
+                ModelProgresses[obj.File] = obj;
+            }
+            if (obj.Status == "done")
+            {
+                ModelProgresses.Remove(obj.File);
+            }
+            StateHasChanged();
+        }
+        ActionCallback<ModelLoadProgress> OnProgress => new ActionCallback<ModelLoadProgress>(Pipeline_OnProgress);
         protected override async Task OnAfterRenderAsync(bool firstRender)
         {
-            if (!beenInit && fileInput == null)
+            if (!beenInit && !busy && Pipelines == null)
             {
-                fileInput = new HTMLInputElement(fileInputRef);
-                fileInput.OnChange += FileInput_OnChange;
+                busy = true;
                 Log($"Pipelines initializing... ", false);
-                worker = WebWorkerService.GetWebWorkerSync();
                 Pipelines = await Pipelines.Init();
-                await worker!.WhenReady;
                 Log($"Done");
                 busy = false;
                 StateHasChanged();
             }
         }
-        async Task LoadDepthEstimationPipeline()
+        string Kitti = "onnx-community/dpt-dinov2-small-kitti";
+        /// <summary>
+        /// Really large... fails to load
+        /// </summary>
+        string JanusModelId = "onnx-community/Janus-1.3B-ONNX";
+        AutoProcessor? processor = null;
+        MultiModalityCausalLM? model = null;
+        async Task LoadModel()
         {
             if (Pipelines == null) return;
             busy = true;
             try
             {
-                Log($"Depth Estimation Pipeline loading... ", false);
-                DepthEstimationPipeline = await Pipelines.DepthEstimationPipeline();
-                Log($"Done");
+                var fp16Supported = false;
+
+                var opts = fp16Supported ? new FromPretrainedSubOptions
+                {
+                    PrepareInputsEmbeds = "q4",
+                    LanguageModel = "q4f16",
+                    LmHead = "fp16",
+                    GenHead = "fp16",
+                    GenImgEmbeds = "fp16",
+                    ImageDecode = "fp32",
+                } : new FromPretrainedSubOptions
+                {
+                    PrepareInputsEmbeds = "fp32",
+                    LanguageModel = "q4",
+                    LmHead = "fp32",
+                    GenHead = "fp32",
+                    GenImgEmbeds = "fp32",
+                    ImageDecode = "fp32",
+                };
+                var deviceOpts = new FromPretrainedSubOptions
+                {
+                    PrepareInputsEmbeds = "wasm",
+                    LanguageModel = "webgpu",
+                    LmHead = "webgpu",
+                    GenHead = "webgpu",
+                    GenImgEmbeds = "webgpu",
+                    ImageDecode = "webgpu",
+                };
+                var options = new FromPretrainedOptions
+                {
+                    OnProgress = OnProgress,
+                    Device = deviceOpts,
+                    Dtype = opts,
+                };
+                model = await Pipelines.Pipeline2<MultiModalityCausalLM>("any-to-any", JanusModelId);
+                JS.Log("_model", model);
+                JS.Set("_model", model);
+                processor = await AutoProcessor.FromPretrained(JanusModelId, options);
+                JS.Log("_processor", processor);
+                JS.Set("_processor", processor);
             }
-            catch
+            catch (Exception ex)
             {
-                Log($"Error");
+                Log($"Error: {ex.Message}");
             }
+            //try
+            //{
+            //    Log($"Depth Estimation Pipeline with WebGPU loading... ", false);
+            //    DepthEstimationPipeline = await Pipelines.DepthEstimationPipeline(DepthAnythingV2Small, new PipelineOptions { Device = "webgpu" });
+            //    Log($"Done");
+            //}
+            //catch
+            //{
+            //    Log($"Error");
+            //}
             beenInit = true;
             busy = false;
             StateHasChanged();
-        }
-        void Pipeline_OnProgress(JSObject obj)
-        {
-            JS.Log("Pipeline_OnProgress", obj);
-            JS.Set("Pipeline_OnProgress", obj);
-        }
-        ActionCallback<JSObject> OnProgress => new ActionCallback<JSObject>(Pipeline_OnProgress);
-        async Task LoadDepthEstimationPipelineWebGPU()
-        {
-            if (Pipelines == null) return;
-            busy = true;
-            try
-            {
-                Log($"Depth Estimation Pipeline with WebGPU loading... ", false);
-                DepthEstimationPipeline = await Pipelines.DepthEstimationPipeline(pipelineOptions: new PipelineOptions { Device = "webgpu", OnProgress = OnProgress });
-                Log($"Done");
-            }
-            catch
-            {
-                Log($"Error");
-            }
-            beenInit = true;
-            busy = false;
-            StateHasChanged();
-        }
-        async void FileInput_OnChange(Event ev)
-        {
-            using var files = fileInput!.Files;
-            using var file = files?.FirstOrDefault();
-            if (file == null) return;
-            try
-            {
-                await ProcessFile(file);
-            }
-            catch { }
         }
         void Log(string msg, bool newLine = true)
         {
@@ -127,52 +175,9 @@ namespace SpawnDev.BlazorJS.TransformersJS.Demo.Pages
             }
             return ret;
         }
-        async Task ProcessFile(File file)
-        {
-            busy = true;
-            StateHasChanged();
-            if (!string.IsNullOrEmpty(fileObjectUrl))
-            {
-                URL.RevokeObjectURL(fileObjectUrl);
-                fileObjectUrl = null;
-            }
-            if (!string.IsNullOrEmpty(depthObjectUrl))
-            {
-                URL.RevokeObjectURL(depthObjectUrl);
-                depthObjectUrl = null;
-            }
-            Log("Creating image data url... ", false);
-            fileObjectUrl = await FileReader.ReadAsDataURLAsync(file);
-            Log("Done");
-            StateHasChanged();
-            try
-            {
-                Log("Estimating depth... ", false);
-                using var depthResult = await DepthEstimationPipeline!.Call(fileObjectUrl!);
-                using var depthInfo = depthResult.Depth;
-                using var depthMapData = depthInfo.Data;
-                depthObjectUrl = CreateDepthImageDataUrl(depthMapData, depthInfo.Width, depthInfo.Height);
-                Log("Done");
-            }
-            catch (Exception ex)
-            {
-                Log($"Error");
-            }
-            busy = false;
-            StateHasChanged();
-        }
+
         public void Dispose()
         {
-            if (fileInput != null)
-            {
-                fileInput.OnChange -= FileInput_OnChange;
-                fileInput.Dispose();
-            }
-            if (!string.IsNullOrEmpty(fileObjectUrl))
-            {
-                URL.RevokeObjectURL(fileObjectUrl);
-                fileObjectUrl = null;
-            }
             if (!string.IsNullOrEmpty(depthObjectUrl))
             {
                 URL.RevokeObjectURL(depthObjectUrl);
