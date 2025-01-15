@@ -1,4 +1,4 @@
-<Project Sdk="Microsoft.NET.Sdk.BlazorWebAssembly">
+﻿<Project Sdk="Microsoft.NET.Sdk.BlazorWebAssembly">
 
 	<PropertyGroup>
 		<TargetFramework>net8.0</TargetFramework>
@@ -6,6 +6,21 @@
 		<ImplicitUsings>enable</ImplicitUsings>
 		<CompressionEnabled>false</CompressionEnabled>
 	</PropertyGroup>
+
+	<ItemGroup>
+	  <None Remove="Shaders\anaglyph.fragment.glsl" />
+	  <None Remove="Shaders\basic.fragment.glsl" />
+	  <None Remove="Shaders\basic.vertex.glsl" />
+	  <None Remove="Shaders\multiview.fragment.glsl" />
+	</ItemGroup>
+
+	<ItemGroup>
+	  <EmbeddedResource Include="Shaders\anaglyph.fragment.glsl" />
+	  <EmbeddedResource Include="Shaders\multiview.vertex.glsl" />
+	  <EmbeddedResource Include="Shaders\basic.fragment.glsl" />
+	  <EmbeddedResource Include="Shaders\basic.vertex.glsl" />
+	  <EmbeddedResource Include="Shaders\multiview.fragment.glsl" />
+	</ItemGroup>
 
 	<ItemGroup>
 		<PackageReference Include="Microsoft.AspNetCore.Components.WebAssembly" Version="8.0.11" />
@@ -16,10 +31,6 @@
 
 	<ItemGroup>
 		<ProjectReference Include="..\SpawnDev.BlazorJS.TransformersJS\SpawnDev.BlazorJS.TransformersJS.csproj" />
-	</ItemGroup>
-
-	<ItemGroup>
-		<Folder Include="Services\" />
 	</ItemGroup>
 
 </Project>

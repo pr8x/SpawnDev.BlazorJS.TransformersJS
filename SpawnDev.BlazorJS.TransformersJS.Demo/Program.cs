@@ -6,6 +6,7 @@ using SpawnDev.BlazorJS.TransformersJS.Demo.Layout.AppTray;
 using SpawnDev.BlazorJS.TransformersJS.Demo.Layout;
 using SpawnDev.BlazorJS.WebWorkers;
 using Radzen;
+using SpawnDev.BlazorJS.TransformersJS.Demo.Services;
 
 var builder = WebAssemblyHostBuilder.CreateDefault(args);
 
@@ -19,6 +20,9 @@ if (JS.IsWindow)
 }
 
 builder.Services.AddScoped(sp => new HttpClient { BaseAddress = new Uri(builder.HostEnvironment.BaseAddress) });
+
+builder.Services.AddSingleton<DepthEstimationService>();
+builder.Services.AddSingleton<MultiViewImageService>();
 
 builder.Services.AddRadzenComponents();
 builder.Services.AddScoped<AppTrayService>();

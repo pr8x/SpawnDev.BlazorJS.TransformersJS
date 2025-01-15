@@ -198,10 +198,10 @@ namespace SpawnDev.BlazorJS.TransformersJS.Demo.Pages
             using var depthMapData = depthInfo.Data;
             var rgbWidth = depthInfo.Width;
             var rgbHeight = depthInfo.Height;
-            resultObjectUrl = await Create2DZDataUrl(rgbImage, depthMapData, rgbWidth, rgbHeight);
-            depthObjectUrl = await CreateDepthImageDataUrl(depthMapData, rgbWidth, rgbHeight);
+            resultObjectUrl = await Create2DZObjectUrl(rgbImage, depthMapData, rgbWidth, rgbHeight);
+            depthObjectUrl = await CreateDepthImageObjectUrl(depthMapData, rgbWidth, rgbHeight);
         }
-        async Task<string> Create2DZDataUrl(HTMLImageElement rgbImage, Uint8Array grayscale1BPPData, int width, int height)
+        async Task<string> Create2DZObjectUrl(HTMLImageElement rgbImage, Uint8Array grayscale1BPPData, int width, int height)
         {
             var outWidth = width * 2;
             var outHeight = height;
@@ -217,7 +217,7 @@ namespace SpawnDev.BlazorJS.TransformersJS.Demo.Pages
             var ret = URL.CreateObjectURL(blob);
             return ret;
         }
-        async Task<string> CreateDepthImageDataUrl(Uint8Array grayscale1BPPData, int width, int height)
+        async Task<string> CreateDepthImageObjectUrl(Uint8Array grayscale1BPPData, int width, int height)
         {
             var grayscaleDataBytes = grayscale1BPPData.ReadBytes();
             var depthmapRGBABytes = Grayscale1BPPToRGBA(grayscaleDataBytes, width, height);

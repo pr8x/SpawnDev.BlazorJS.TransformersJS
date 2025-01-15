@@ -1,0 +1,105 @@
+﻿@page "/AnaglyphImageDemo"
+@using SpawnDev.BlazorJS.JSObjects
+@implements IDisposable
+
+<h3>2D to Anaglyph</h3>
+
+<div>
+    <AnaglyphImage Source="@Source2DImage" Focus3D="@Focus3D" Level3D="@Level3D" AnaglyphProfile="@AnaglyphProfile" />
+</div>
+<div>
+    <RadzenStack Orientation="Orientation.Vertical" AlignItems="AlignItems.Normal" JustifyContent="JustifyContent.Left" Gap="0.5rem" Style="padding: 1rem 0;">
+        <RadzenLabel Text="Focus" Component="@nameof(Focus3D)" class="rz-ms-2" />
+        <RadzenSlider Name="@nameof(Focus3D)" TValue="float" Value="@Focus3D" Max="1" Change="Focus3DChanged" Step="0.1" />
+    </RadzenStack>
+    <RadzenStack Orientation="Orientation.Vertical" AlignItems="AlignItems.Normal" JustifyContent="JustifyContent.Left" Gap="0.5rem" Style="padding: 1rem 0;">
+        <RadzenLabel Text="3D Level" Component="@nameof(Level3D)" class="rz-ms-2" />
+        <RadzenSlider Name="@nameof(Level3D)" TValue="float" Value="@Level3D" Max="4" Change="Level3DChanged" Step="0.1" />
+    </RadzenStack>
+</div>
+<div>
+    <RadzenStack Orientation="Orientation.Vertical" AlignItems="AlignItems.Normal" JustifyContent="JustifyContent.Left" Gap="0.5rem">
+        <RadzenLabel Text="Anaglyph Mode" Component="DropDownBindValue" />
+        <RadzenDropDown ValueChanged="AnaglyphModeChange" TValue="string" Value=@AnaglyphMode Data=@AnaglyphModes Style="width: 100%; max-width: 400px;" Name="DropDownBindValue" />
+    </RadzenStack>
+    <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Normal" JustifyContent="JustifyContent.Left" Gap="0.5rem" Style="padding: 1rem 0;">
+        <input @ref=fileInputRef accept="image/*" type="file" disabled="@(busy)" style="width: 100%;" />
+    </RadzenStack>
+</div>
+
+@code {
+    string Source2DImage => string.IsNullOrEmpty(fileObjectUrl) ? Source2DImageDefault : fileObjectUrl;
+    string? fileObjectUrl = null;
+    string Source2DImageDefault = "images/National-Zoo.jpg";
+    float Focus3D = 0.5f;
+    float Level3D = 1;
+    ElementReference fileInputRef;
+    HTMLInputElement? fileInput;
+    bool busy = false;
+    string AnaglyphMode = AnaglyphModes.First();
+    int AnaglyphProfile = 0;
+
+    static List<string> AnaglyphModes = new List<string>
+    {
+        "Green Magenta",
+        "Red Cyan",
+    };
+    void AnaglyphModeChange(string mode)
+    {
+        AnaglyphProfile = AnaglyphModes.IndexOf(mode);
+        if (AnaglyphProfile < 0) AnaglyphProfile = 0;
+        AnaglyphMode = AnaglyphModes[AnaglyphProfile];
+        StateHasChanged();
+    }
+
+    protected override void OnAfterRender(bool firstRender)
+    {
+        if (firstRender)
+        {
+            fileInput = new HTMLInputElement(fileInputRef);
+            fileInput.OnChange += FileInput_OnChange;
+        }
+    }
+    async void FileInput_OnChange(Event ev)
+    {
+        if (!string.IsNullOrEmpty(fileObjectUrl))
+        {
+            URL.RevokeObjectURL(fileObjectUrl);
+            fileObjectUrl = null;
+        }
+        using var Files = fileInput!.Files;
+        using var File = Files!.FirstOrDefault();
+        if (File == null)
+        {
+            return;
+        }
+        busy = true;
+        StateHasChanged();
+        fileObjectUrl = await FileReader.ReadAsDataURLAsync(File);
+        busy = false;
+        StateHasChanged();
+    }
+    void Focus3DChanged(float args)
+    {
+        Focus3D = args;
+        StateHasChanged();
+    }
+    void Level3DChanged(float args)
+    {
+        Level3D = args;
+        StateHasChanged();
+    }
+    public void Dispose()
+    {
+        if (!string.IsNullOrEmpty(fileObjectUrl))
+        {
+            URL.RevokeObjectURL(fileObjectUrl);
+            fileObjectUrl = null;
+        }
+        if (fileInput != null)
+        {
+            fileInput.OnChange -= FileInput_OnChange;
+            fileInput.Dispose();
+        }
+    }
+}
