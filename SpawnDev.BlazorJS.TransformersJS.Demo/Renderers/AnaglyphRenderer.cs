@@ -102,32 +102,6 @@ namespace SpawnDev.BlazorJS.TransformersJS.Demo.Renderers
             }
             program = CreateProgram(vertexShader, fragmentShader);
         }
-        //public async Task<string> From2DImage(string source, string model = "onnx-community/depth-anything-v2-small", bool useWebGPU = true, float focusDepth = 0.5f, float level3D = 1)
-        //{
-        //    if (!Results.TryGetValue(source, out var imageWithDepth))
-        //    {
-        //        // get image
-        //        using var image = await HTMLImageElement.CreateFromImageAsync(source);
-        //        // get the depth estimation pipeline
-        //        var DepthEstimationPipeline = await DepthEstimationService.GetDepthEstimationPipeline(model, useWebGPU);
-        //        // generate the depth map
-        //        using var depthResult = await DepthEstimationPipeline!.Call(source);
-        //        using var depthInfo = depthResult.Depth;
-        //        using var depthMapData = depthInfo.Data;
-        //        var depthWidth = depthInfo.Width;
-        //        var depthHeight = depthInfo.Height;
-        //        // create 2D+Z image object url
-        //        var imageWithDepthObjectUrl = await Create2DZObjectUrl(image, depthMapData, depthWidth, depthHeight);
-        //        imageWithDepth = await HTMLImageElement.CreateFromImageAsync(imageWithDepthObjectUrl);
-        //        Results[source] = imageWithDepth;
-        //    }
-        //    // use WebGL to convert 2D+Z to anaglyph
-        //    anaglyphRenderer ??= new AnaglyphRenderer();
-        //    anaglyphRenderer.Level3D = level3D;
-        //    anaglyphRenderer.Focus3D = focusDepth;
-        //    var temp = await anaglyphRenderer.Render(imageWithDepth);
-        //    return temp;
-        //}
         public override void ApplyEffect()
         {
             var profile = AnaglyphProfiles[ProfileIndex];

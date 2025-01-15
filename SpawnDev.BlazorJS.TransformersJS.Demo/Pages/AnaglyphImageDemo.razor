@@ -76,7 +76,8 @@
     {
         AnaglyphProfile = AnaglyphModes.IndexOf(mode);
         if (AnaglyphProfile < 0) AnaglyphProfile = 0;
-        AnaglyphMode = AnaglyphModes[AnaglyphProfile]; UpdateOutputFilename();
+        AnaglyphMode = AnaglyphModes[AnaglyphProfile]; 
+        UpdateOutputFilename();
         StateHasChanged();
     }
 
