@@ -22,7 +22,6 @@ if (JS.IsWindow)
 builder.Services.AddScoped(sp => new HttpClient { BaseAddress = new Uri(builder.HostEnvironment.BaseAddress) });
 
 builder.Services.AddSingleton<DepthEstimationService>();
-builder.Services.AddSingleton<MultiViewImageService>();
 
 builder.Services.AddRadzenComponents();
 builder.Services.AddScoped<AppTrayService>();
