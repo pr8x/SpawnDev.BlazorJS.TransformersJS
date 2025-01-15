@@ -1,9 +1,15 @@
 ﻿@page "/AnaglyphImageDemo"
 @using SpawnDev.BlazorJS.JSObjects
+@using SpawnDev.BlazorJS.TransformersJS.Demo.Services
 @implements IDisposable
 
 <h3>2D to Anaglyph</h3>
 
+<div class="rz-ms-2">
+    <div style="padding: 0.5rem 0; max-width: 600px;">
+        <ModelLoadView ModelProgresses="@DepthEstimationService.ModelProgresses" />
+    </div>
+</div>
 <div>
     <AnaglyphImage Source="@Source2DImage" Focus3D="@Focus3D" Level3D="@Level3D" AnaglyphProfile="@AnaglyphProfile" />
 </div>
@@ -25,10 +31,6 @@
     <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Normal" JustifyContent="JustifyContent.Left" Gap="0.5rem" Style="padding: 1rem 0;">
         <input @ref=fileInputRef accept="image/*" type="file" disabled="@(busy)" style="width: 100%;" />
     </RadzenStack>
-    <div class="rz-ms-2">
-        Note: This demo does not show a loading indicator for the machine learning models used for depth estimation.
-        A fast reliable connection will greatly help. Data is cached to improve load speeds.
-    </div>
 </div>
 
 @code {
@@ -42,6 +44,9 @@
     bool busy = false;
     string AnaglyphMode = AnaglyphModes.First();
     int AnaglyphProfile = 0;
+
+    [Inject]
+    DepthEstimationService DepthEstimationService { get; set; }
 
     static List<string> AnaglyphModes = new List<string>
     {
@@ -62,7 +67,12 @@
         {
             fileInput = new HTMLInputElement(fileInputRef);
             fileInput.OnChange += FileInput_OnChange;
+            DepthEstimationService.OnStateChange += DepthEstimationService_OnStateChange;
         }
+    }
+    void DepthEstimationService_OnStateChange()
+    {
+        StateHasChanged();
     }
     async void FileInput_OnChange(Event ev)
     {
@@ -95,6 +105,7 @@
     }
     public void Dispose()
     {
+        DepthEstimationService.OnStateChange -= DepthEstimationService_OnStateChange;
         if (!string.IsNullOrEmpty(fileObjectUrl))
         {
             URL.RevokeObjectURL(fileObjectUrl);

@@ -11,7 +11,7 @@ namespace SpawnDev.BlazorJS.TransformersJS.Demo.Pages
         HTMLCanvasElement? canvas = null;
 
         [Inject]
-        MultiViewImageService MultiViewImageService { get; set; }
+        DepthEstimationService DepthEstimationService { get; set; }
 
         [Parameter]
         public string DepthEstimationModel { get; set; } = "";
@@ -65,7 +65,7 @@ namespace SpawnDev.BlazorJS.TransformersJS.Demo.Pages
                         anaglyphRenderer.SetInput(image, "2d");
                         anaglyphRenderer.Render();
                     }
-                    var imageWithDepth = await MultiViewImageService.ImageTo2DZImage(Source, DepthEstimationModel, UseWebGPU);
+                    var imageWithDepth = await DepthEstimationService.ImageTo2DZImage(Source, DepthEstimationModel, UseWebGPU);
                     anaglyphRenderer.Level3D = Level3D;
                     anaglyphRenderer.Focus3D = Focus3D;
                     anaglyphRenderer.ProfileIndex = AnaglyphProfile;
