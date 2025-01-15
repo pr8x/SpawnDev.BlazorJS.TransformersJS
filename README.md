@@ -17,7 +17,7 @@ Transformers.js is designed to be functionally equivalent to Hugging Face’s tr
 Transformers.js uses ONNX Runtime to run models in the browser. The best part about it, is that you can easily convert your pretrained PyTorch, TensorFlow, or JAX models to ONNX using 🤗 Optimum.
 
 ### Demo
-The current demo app demos some features of Transformers.js, Blazor, and WebGL.
+The current demo app uses Transformers.js, Blazor, and WebGL.
 
 NOTE: The models used can be large. A fast connection is recommended.  
 
