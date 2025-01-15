@@ -8,10 +8,10 @@ SpawnDev.BlazorJS.TransformersJS brings the awesome Transformers.js library into
 
 Transformers.js is designed to be functionally equivalent to Hugging Face’s transformers python library, meaning you can run the same pretrained models using a very similar API. These models support common tasks in different modalities, such as:
 
-📝 Natural Language Processing: text classification, named entity recognition, question answering, language modeling, summarization, translation, multiple choice, and text generation.
-🖼️ Computer Vision: image classification, object detection, segmentation, and depth estimation.
-🗣️ Audio: automatic speech recognition, audio classification, and text-to-speech.
-🐙 Multimodal: embeddings, zero-shot audio classification, zero-shot image classification, and zero-shot object detection.
+- 📝 Natural Language Processing: text classification, named entity recognition, question answering, language modeling, summarization, translation, multiple choice, and text generation.  
+- 🖼️ Computer Vision: image classification, object detection, segmentation, and depth estimation.  
+- 🗣️ Audio: automatic speech recognition, audio classification, and text-to-speech.  
+- 🐙 Multimodal: embeddings, zero-shot audio classification, zero-shot image classification, and zero-shot object detection.  
 
 Transformers.js uses ONNX Runtime to run models in the browser. The best part about it, is that you can easily convert your pretrained PyTorch, TensorFlow, or JAX models to ONNX using 🤗 Optimum.
 
