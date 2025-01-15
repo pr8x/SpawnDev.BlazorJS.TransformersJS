@@ -1,6 +1,8 @@
 ﻿# SpawnDev.BlazorJS.TransformersJS
 [![NuGet](https://img.shields.io/nuget/dt/SpawnDev.BlazorJS.TransformersJS.svg?label=SpawnDev.BlazorJS.TransformersJS)](https://www.nuget.org/packages/SpawnDev.BlazorJS.TransformersJS) 
 
+# WIP - The API is currently limited. If you are interested in this project, please start an issue to suggest features or areas of interest.
+
 ## State-of-the-art Machine Learning for the Web in Blazor WebAssembly
 SpawnDev.BlazorJS.TransformersJS brings the awesome Transformers.js library into Blazor WebAssembly apps.
 
