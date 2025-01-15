@@ -1,5 +1,6 @@
 ﻿using SpawnDev.BlazorJS.JSObjects;
 using SpawnDev.BlazorJS.TransformersJS.Demo.Pages;
+using System.Text.Json.Serialization;
 using static System.Net.Mime.MediaTypeNames;
 
 namespace SpawnDev.BlazorJS.TransformersJS.Demo.Renderers
@@ -16,13 +17,19 @@ namespace SpawnDev.BlazorJS.TransformersJS.Demo.Renderers
         protected MultiviewRenderer()
         {
             offscreenCanvas = new OffscreenCanvas(1, 1);
-            gl = offscreenCanvas.GetWebGLContext();
+            gl = offscreenCanvas.GetWebGLContext(new WebGLContextAttributes
+            {
+                PreserveDrawingBuffer = true,
+            });
             // classes that implement this class will create he shader program
         }
         protected MultiviewRenderer(HTMLCanvasElement canvas)
         {
             this.canvas = canvas;
-            gl = canvas.GetWebGLContext();
+            gl = canvas.GetWebGLContext(new WebGLContextAttributes
+            {
+                PreserveDrawingBuffer = true,
+            });
             // classes that implement this class will create he shader program
         }
         public void Dispose()
@@ -73,35 +80,55 @@ namespace SpawnDev.BlazorJS.TransformersJS.Demo.Renderers
             // overlay texture
             overlayTexture ??= CreateImageTexture();
         }
-        public async Task<Blob?> ToBlob()
+        // below ConvertToBlobOptions class can be removed when SpawnDev.BlazorJS is next updated
+        class ConvertToBlobOptions
         {
+            /// <summary>
+            /// A string indicating the image format. The default type is image/png; that type is also used if the given type isn't supported.
+            /// </summary>
+            [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+            public string? Type { get; set; }
+            /// <summary>
+            /// A Number between 0 and 1 indicating the image quality to be used when creating images using file formats that support lossy compression (such as image/jpeg or image/webp). A user agent will use its default quality value if this option is not specified, or if the number is outside the allowed range.
+            /// </summary>
+            [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+            public float? Quality { get; set; }
+        }
+        public async Task<Blob?> ToBlob(string? type = null, float? quality = null)
+        {
+            if (string.IsNullOrEmpty(type))
+            {
+                type = "image/png";
+            }
             if (canvas != null)
             {
-                using var pngBlob = await canvas.ToBlobAsync();
-                return pngBlob;
+                if (quality != null)
+                {
+                    var blob = await canvas.ToBlobAsync(type, quality.Value);
+                    return blob;
+                }
+                else
+                {
+                    var blob = await canvas.ToBlobAsync(type);
+                    return blob;
+                }
             }
             else if (offscreenCanvas != null)
             {
-                using var pngBlob = await offscreenCanvas.ConvertToBlob();
-                return pngBlob;
+                var blob = await offscreenCanvas.ConvertToBlob(new ConvertToBlobOptions
+                {
+                    Type = type,
+                    Quality = quality,
+                });
+                return blob;
             }
             return null;
         }
-        public async Task<string?> ToObjectUrl()
+        public async Task<string?> ToObjectUrl(string? type = null, float? quality = null)
         {
-            if (canvas != null)
-            {
-                using var pngBlob = await canvas.ToBlobAsync();
-                var objectUrl = URL.CreateObjectURL(pngBlob);
-                return objectUrl;
-            }
-            else if (offscreenCanvas != null)
-            {
-                using var pngBlob = await offscreenCanvas.ConvertToBlob();
-                var objectUrl = URL.CreateObjectURL(pngBlob);
-                return objectUrl;
-            }
-            return null;
+            using var blob = await ToBlob(type, quality);
+            var objectUrl = blob == null ? null : URL.CreateObjectURL(blob);
+            return objectUrl;
         }
         public bool AutoSize { get; set; } = true;
         public int OutWidth

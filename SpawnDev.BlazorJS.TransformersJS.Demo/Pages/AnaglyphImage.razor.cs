@@ -13,6 +13,9 @@ namespace SpawnDev.BlazorJS.TransformersJS.Demo.Pages
         [Inject]
         DepthEstimationService DepthEstimationService { get; set; }
 
+        [Inject]
+        BlazorJSRuntime JS { get; set; }
+
         [Parameter]
         public string DepthEstimationModel { get; set; } = "";
 
@@ -46,7 +49,37 @@ namespace SpawnDev.BlazorJS.TransformersJS.Demo.Pages
             Console.WriteLine($"OnParametersSet {IsDirty}");
             IsDirty = true;
         }
-
+        public async Task<bool> DownloadImage(string filename, float? quality = null)
+        {
+            if (anaglyphRenderer == null) return false;
+            var ext = filename.Split(".").Last().ToLowerInvariant();
+            string? mimeType = null;
+            switch (ext)
+            {
+                case "jpg":
+                case "jpeg":
+                    mimeType = "image/jpeg";
+                    break;
+                default:
+                    mimeType = $"image/{ext}";
+                    break;
+            }
+            var objectUrl = await anaglyphRenderer.ToObjectUrl(mimeType, quality);
+            if (string.IsNullOrEmpty(objectUrl)) return false;
+            DownloadFile(objectUrl, filename);
+            URL.RevokeObjectURL(objectUrl);
+            return true;
+        }
+        void DownloadFile(string url, string filename)
+        {
+            using var document = JS.GetDocument();
+            using var a = document!.CreateElement<HTMLAnchorElement>("a");
+            a.Href = url;
+            a.Download = filename;
+            document.Body!.AppendChild(a);
+            a.Click();
+            document.Body.RemoveChild(a);
+        }
         bool beenRendered = false;
         protected override async Task OnAfterRenderAsync(bool firstRender)
         {

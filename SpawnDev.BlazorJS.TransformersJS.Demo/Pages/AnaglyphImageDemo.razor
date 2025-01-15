@@ -11,16 +11,18 @@
     </div>
 </div>
 <div>
-    <AnaglyphImage Source="@Source2DImage" Focus3D="@Focus3D" Level3D="@Level3D" AnaglyphProfile="@AnaglyphProfile" />
+    <AnaglyphImage @ref=anaglyphImage Source="@Source2DImage" Focus3D="@Focus3D" Level3D="@Level3D" AnaglyphProfile="@AnaglyphProfile" />
 </div>
 <div>
-    <RadzenStack Orientation="Orientation.Vertical" AlignItems="AlignItems.Normal" JustifyContent="JustifyContent.Left" Gap="0.5rem" Style="padding: 1rem 0;">
-        <RadzenLabel Text="Focus" Component="@nameof(Focus3D)" class="rz-ms-2" />
-        <RadzenSlider Name="@nameof(Focus3D)" TValue="float" Value="@Focus3D" Max="1" Change="Focus3DChanged" Step="0.1" />
-    </RadzenStack>
-    <RadzenStack Orientation="Orientation.Vertical" AlignItems="AlignItems.Normal" JustifyContent="JustifyContent.Left" Gap="0.5rem" Style="padding: 1rem 0;">
-        <RadzenLabel Text="3D Level" Component="@nameof(Level3D)" class="rz-ms-2" />
-        <RadzenSlider Name="@nameof(Level3D)" TValue="float" Value="@Level3D" Max="4" Change="Level3DChanged" Step="0.1" />
+    <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Normal" JustifyContent="JustifyContent.Left" Gap="0.5rem" Style="padding: 1rem 0;">
+        <RadzenStack Orientation="Orientation.Vertical" AlignItems="AlignItems.Normal" JustifyContent="JustifyContent.Left" Gap="0.5rem" Style="padding: 1rem 0;">
+            <RadzenLabel Text="Focus" Component="@nameof(Focus3D)" class="rz-ms-2" />
+            <RadzenSlider Name="@nameof(Focus3D)" TValue="float" Value="@Focus3D" Max="1" Change="Focus3DChanged" Step="0.01" />
+        </RadzenStack>
+        <RadzenStack Orientation="Orientation.Vertical" AlignItems="AlignItems.Normal" JustifyContent="JustifyContent.Left" Gap="0.5rem" Style="padding: 1rem 0;">
+            <RadzenLabel Text="3D Level" Component="@nameof(Level3D)" class="rz-ms-2" />
+            <RadzenSlider Name="@nameof(Level3D)" TValue="float" Value="@Level3D" Max="4" Change="Level3DChanged" Step="0.01" />
+        </RadzenStack>
     </RadzenStack>
 </div>
 <div>
@@ -31,23 +33,40 @@
     <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Normal" JustifyContent="JustifyContent.Left" Gap="0.5rem" Style="padding: 1rem 0;">
         <input @ref=fileInputRef accept="image/*" type="file" disabled="@(busy)" style="width: 100%;" />
     </RadzenStack>
+    <div style="padding: 1rem 0;">
+        <button style="margin: 2px;" onclick="@Download" disabled="@(busy || string.IsNullOrEmpty(outputFileName))">Download: @(outputFileName)</button><br />
+    </div>
 </div>
 
 @code {
-    string Source2DImage => string.IsNullOrEmpty(fileObjectUrl) ? Source2DImageDefault : fileObjectUrl;
-    string? fileObjectUrl = null;
+    [Inject]
+    BlazorJSRuntime JS { get; set; } = default!;
+
+    string Source2DImage => string.IsNullOrEmpty(SelectedFileObjectUrl) ? Source2DImageDefault : SelectedFileObjectUrl;
+    string? SelectedFileObjectUrl = null;
+    string sourceFileName = "National-Zoo.jpg";
     string Source2DImageDefault = "images/National-Zoo.jpg";
     float Focus3D = 0.5f;
     float Level3D = 1;
+    AnaglyphImage? anaglyphImage = null;
     ElementReference fileInputRef;
     HTMLInputElement? fileInput;
     bool busy = false;
     string AnaglyphMode = AnaglyphModes.First();
     int AnaglyphProfile = 0;
+    string outputFileName = "";
+    string outputFileExt = "jpg";   // jpg, png, webp
 
     [Inject]
     DepthEstimationService DepthEstimationService { get; set; }
 
+    async Task Download()
+    {
+        if (anaglyphImage == null) return;
+        Console.WriteLine($"Download: {outputFileName}");
+        await anaglyphImage.DownloadImage(outputFileName);
+    }
+    
     static List<string> AnaglyphModes = new List<string>
     {
         "Green Magenta",
@@ -57,7 +76,7 @@
     {
         AnaglyphProfile = AnaglyphModes.IndexOf(mode);
         if (AnaglyphProfile < 0) AnaglyphProfile = 0;
-        AnaglyphMode = AnaglyphModes[AnaglyphProfile];
+        AnaglyphMode = AnaglyphModes[AnaglyphProfile]; UpdateOutputFilename();
         StateHasChanged();
     }
 
@@ -68,6 +87,7 @@
             fileInput = new HTMLInputElement(fileInputRef);
             fileInput.OnChange += FileInput_OnChange;
             DepthEstimationService.OnStateChange += DepthEstimationService_OnStateChange;
+            UpdateOutputFilename();
         }
     }
     void DepthEstimationService_OnStateChange()
@@ -76,10 +96,10 @@
     }
     async void FileInput_OnChange(Event ev)
     {
-        if (!string.IsNullOrEmpty(fileObjectUrl))
+        if (!string.IsNullOrEmpty(SelectedFileObjectUrl))
         {
-            URL.RevokeObjectURL(fileObjectUrl);
-            fileObjectUrl = null;
+            URL.RevokeObjectURL(SelectedFileObjectUrl);
+            SelectedFileObjectUrl = null;
         }
         using var Files = fileInput!.Files;
         using var File = Files!.FirstOrDefault();
@@ -87,11 +107,31 @@
         {
             return;
         }
+        sourceFileName = File.Name;
+        UpdateOutputFilename();
         busy = true;
         StateHasChanged();
-        fileObjectUrl = await FileReader.ReadAsDataURLAsync(File);
+        SelectedFileObjectUrl = await FileReader.ReadAsDataURLAsync(File);
         busy = false;
         StateHasChanged();
+    }
+    void UpdateOutputFilename()
+    {
+        outputFileName = MakeOutputFilename($".{AnaglyphMode.Replace(" ", "")}", outputFileExt) ?? "";
+    }
+    string? MakeOutputFilename(string? preExtensionTag = null, string? extension = null)
+    {
+        if (string.IsNullOrEmpty(sourceFileName)) return null;
+        var ext = sourceFileName.Split('.').Last();
+        var filenameBase = sourceFileName.Substring(0, sourceFileName.Length - ext.Length - 1);
+        if (extension == null) extension = ext;
+        var ret = filenameBase; //$"{filenameBase}.2DZ.{extension}";
+        if (preExtensionTag != null)
+        {
+            ret += preExtensionTag;
+        }
+        ret += $".{extension}";
+        return ret;
     }
     void Focus3DChanged(float args)
     {
@@ -106,10 +146,10 @@
     public void Dispose()
     {
         DepthEstimationService.OnStateChange -= DepthEstimationService_OnStateChange;
-        if (!string.IsNullOrEmpty(fileObjectUrl))
+        if (!string.IsNullOrEmpty(SelectedFileObjectUrl))
         {
-            URL.RevokeObjectURL(fileObjectUrl);
-            fileObjectUrl = null;
+            URL.RevokeObjectURL(SelectedFileObjectUrl);
+            SelectedFileObjectUrl = null;
         }
         if (fileInput != null)
         {
