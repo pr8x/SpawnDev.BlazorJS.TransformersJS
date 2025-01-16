@@ -439,55 +439,40 @@ namespace SpawnDev.BlazorJS.TransformersJS.Demo.Renderers
             _uniforms.Add(name, uniform);
             return uniform;
         }
-        protected void Uniform2f(string name, float x, float y)
+        protected bool Uniform2f(string name, float x, float y)
         {
             var uniformLocation = GetUniformLocation(name);
-            if (uniformLocation == null)
-            {
-                Console.WriteLine($"Note: uniform not found - {name}");
-                return;
-            }
+            if (uniformLocation == null) return false;
             gl.Uniform2f(uniformLocation, x, y);
+            return true;
         }
-        protected void Uniform1f(string name, float x)
+        protected bool Uniform1f(string name, float x)
         {
             var uniformLocation = GetUniformLocation(name);
-            if (uniformLocation == null)
-            {
-                Console.WriteLine($"Note: uniform not found - {name}");
-                return;
-            }
+            if (uniformLocation == null) return false;
             gl.Uniform1f(uniformLocation, x);
+            return true;
         }
-        protected void Uniform1fv(string name, IEnumerable<float> v)
+        protected bool Uniform1fv(string name, IEnumerable<float> v)
         {
             var uniformLocation = GetUniformLocation(name);
-            if (uniformLocation == null)
-            {
-                Console.WriteLine($"Note: uniform not found - {name}");
-                return;
-            }
+            if (uniformLocation == null) return false;
             gl.Uniform1fv(uniformLocation, v);
+            return true;
         }
-        protected void Uniform1iv(string name, IEnumerable<int> v)
+        protected bool Uniform1iv(string name, IEnumerable<int> v)
         {
             var uniformLocation = GetUniformLocation(name);
-            if (uniformLocation == null)
-            {
-                Console.WriteLine($"Note: uniform not found - {name}");
-                return;
-            }
+            if (uniformLocation == null) return false;
             gl.Uniform1iv(uniformLocation, v);
+            return true;
         }
-        protected void Uniform1i(string name, int x)
+        protected bool Uniform1i(string name, int x)
         {
             var uniformLocation = GetUniformLocation(name);
-            if (uniformLocation == null)
-            {
-                Console.WriteLine($"Note: uniform not found - {name}");
-                return;
-            }
+            if (uniformLocation == null) return false;
             gl.Uniform1i(uniformLocation, x);
+            return true;
         }
         protected WebGLProgram CreateProgram(string vertexShader, string fragmentShader)
         {

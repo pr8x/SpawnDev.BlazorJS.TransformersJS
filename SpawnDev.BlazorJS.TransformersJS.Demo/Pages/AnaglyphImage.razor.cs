@@ -88,7 +88,6 @@ namespace SpawnDev.BlazorJS.TransformersJS.Demo.Pages
         {
             var outputKey = OutputKey;
             if (_OutputKeyCurrent == outputKey || Processing) return;
-            Console.WriteLine("Update()");
             try
             {
                 canvas ??= new HTMLCanvasElement(canvasElRef);
