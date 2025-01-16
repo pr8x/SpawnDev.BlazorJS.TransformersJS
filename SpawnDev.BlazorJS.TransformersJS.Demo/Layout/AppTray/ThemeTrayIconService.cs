@@ -7,8 +7,8 @@ namespace SpawnDev.BlazorJS.TransformersJS.Demo.Layout.AppTray
     public class ThemeTrayIconService : IBackgroundService
     {
         BlazorJSRuntime JS;
-        Storage? LocalStorage;
         AppTrayService TrayIconService;
+        Storage? LocalStorage;
         AppTrayIcon ThemeTrayIcon;
         ThemeService ThemeService;
         ContextMenuService ContextMenuService;

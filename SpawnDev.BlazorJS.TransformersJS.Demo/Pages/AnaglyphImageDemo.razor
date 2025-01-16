@@ -3,39 +3,37 @@
 @using SpawnDev.BlazorJS.TransformersJS.Demo.Services
 @implements IDisposable
 
-<h3>2D to Anaglyph</h3>
+<div style="padding: 1rem;">
+    <h3>2D to Anaglyph</h3>
 
-<div class="rz-ms-2">
-    <div style="padding: 0.5rem 0; max-width: 600px;">
-        <ModelLoadView ModelProgresses="@DepthEstimationService.ModelProgresses" />
+    <div style="position: relative; display: inline-block;">
+        <AnaglyphImage ProgressChanged="AnaglyphImage_OnProgressChanged" @ref=anaglyphImage Source="@Source2DImage" Focus3D="@Focus3D" Level3D="@Level3D" AnaglyphProfile="@AnaglyphProfile" />
+        <div style="@(DepthEstimationService.ModelsLoaded && anaglyphImage?.Processing != true ? "display: none;" : "") text-align: center; background-color: rgba(15,15,15,0.3); border-radius: 15px; border: 2px solid gray; position: absolute; left: 50%; top: 50%; width: 100px; height: 100px; margin-left: -50px; margin-top: -50px;">
+            <RadzenProgressBarCircular ShowValue="@(!DepthEstimationService.ModelsLoaded)" Mode="@(DepthEstimationService.ModelsLoaded ? ProgressBarMode.Indeterminate: ProgressBarMode.Determinate)" ProgressBarStyle="ProgressBarStyle.Primary" Value="@Math.Round(DepthEstimationService.OverallLoadProgress)" Size="ProgressBarCircularSize.Large" />
+        </div>
     </div>
-</div>
-<div>
-    <AnaglyphImage @ref=anaglyphImage Source="@Source2DImage" Focus3D="@Focus3D" Level3D="@Level3D" AnaglyphProfile="@AnaglyphProfile" />
-</div>
-<div>
-    <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Normal" JustifyContent="JustifyContent.Left" Gap="0.5rem" Style="padding: 1rem 0;">
-        <RadzenStack Orientation="Orientation.Vertical" AlignItems="AlignItems.Normal" JustifyContent="JustifyContent.Left" Gap="0.5rem" Style="padding: 1rem 0;">
-            <RadzenLabel Text="Focus" Component="@nameof(Focus3D)" class="rz-ms-2" />
-            <RadzenSlider Name="@nameof(Focus3D)" TValue="float" Value="@Focus3D" Max="1" Change="Focus3DChanged" Step="0.01" />
+    <RadzenStack Style="@(DepthEstimationService.ModelsLoaded ? "" : "display: none;")" Orientation="Orientation.Horizontal" AlignItems="AlignItems.Normal" JustifyContent="JustifyContent.Left" Gap="0.5rem">
+        <RadzenStack Orientation="Orientation.Vertical" AlignItems="AlignItems.Normal" JustifyContent="JustifyContent.Left" Gap="0.5rem">
+            <RadzenLabel Text="Anaglyph Mode" Component="DropDownBindValue" />
+            <RadzenDropDown Disabled="@(busy || DepthEstimationService.Loading)" ValueChanged="AnaglyphModeChange" TValue="string" Value=@AnaglyphMode Data=@AnaglyphModes Style="width: 100%; max-width: 400px;" Name="DropDownBindValue" />
+            <input @ref=fileInputRef accept="image/*" type="file" disabled="@(busy || DepthEstimationService.Loading)" style="width: 100%;" />
         </RadzenStack>
-        <RadzenStack Orientation="Orientation.Vertical" AlignItems="AlignItems.Normal" JustifyContent="JustifyContent.Left" Gap="0.5rem" Style="padding: 1rem 0;">
-            <RadzenLabel Text="3D Level" Component="@nameof(Level3D)" class="rz-ms-2" />
-            <RadzenSlider Name="@nameof(Level3D)" TValue="float" Value="@Level3D" Max="4" Change="Level3DChanged" Step="0.01" />
+        <RadzenStack Orientation="Orientation.Vertical" AlignItems="AlignItems.Normal" JustifyContent="JustifyContent.Left" Gap="0.5rem">
+            <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Normal" JustifyContent="JustifyContent.Left" Gap="0.5rem" Style="">
+                <RadzenStack Orientation="Orientation.Vertical" AlignItems="AlignItems.Normal" JustifyContent="JustifyContent.Left" Gap="0.5rem" Style="padding: 1rem 0;">
+                    <RadzenLabel Text="Focus" Component="@nameof(Focus3D)" class="rz-ms-2" />
+                    <RadzenSlider Disabled="@(busy || DepthEstimationService.Loading)" Name="@nameof(Focus3D)" TValue="float" Value="@Focus3D" Max="1" Change="Focus3DChanged" Step="0.01" />
+                </RadzenStack>
+                <RadzenStack Orientation="Orientation.Vertical" AlignItems="AlignItems.Normal" JustifyContent="JustifyContent.Left" Gap="0.5rem" Style="padding: 1rem 0;">
+                    <RadzenLabel Text="3D Level" Component="@nameof(Level3D)" class="rz-ms-2" />
+                    <RadzenSlider Disabled="@(busy || DepthEstimationService.Loading)" Name="@nameof(Level3D)" TValue="float" Value="@Level3D" Max="4" Change="Level3DChanged" Step="0.01" />
+                </RadzenStack>
+            </RadzenStack>
+            <div style="padding: 4px;">
+                <button style="margin: 2px;" onclick="@Download" disabled="@(busy || DepthEstimationService.Loading || string.IsNullOrEmpty(outputFileName))">Download: @(outputFileName)</button><br />
+            </div>
         </RadzenStack>
     </RadzenStack>
-</div>
-<div>
-    <RadzenStack Orientation="Orientation.Vertical" AlignItems="AlignItems.Normal" JustifyContent="JustifyContent.Left" Gap="0.5rem">
-        <RadzenLabel Text="Anaglyph Mode" Component="DropDownBindValue" />
-        <RadzenDropDown ValueChanged="AnaglyphModeChange" TValue="string" Value=@AnaglyphMode Data=@AnaglyphModes Style="width: 100%; max-width: 400px;" Name="DropDownBindValue" />
-    </RadzenStack>
-    <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Normal" JustifyContent="JustifyContent.Left" Gap="0.5rem" Style="padding: 1rem 0;">
-        <input @ref=fileInputRef accept="image/*" type="file" disabled="@(busy)" style="width: 100%;" />
-    </RadzenStack>
-    <div style="padding: 1rem 0;">
-        <button style="margin: 2px;" onclick="@Download" disabled="@(busy || string.IsNullOrEmpty(outputFileName))">Download: @(outputFileName)</button><br />
-    </div>
 </div>
 
 @code {
@@ -57,6 +55,7 @@
     string outputFileName = "";
     string outputFileExt = "jpg";   // jpg, png, webp
 
+
     [Inject]
     DepthEstimationService DepthEstimationService { get; set; }
 
@@ -66,7 +65,12 @@
         Console.WriteLine($"Download: {outputFileName}");
         await anaglyphImage.DownloadImage(outputFileName);
     }
-    
+
+    void AnaglyphImage_OnProgressChanged(bool busy)
+    {
+        StateHasChanged();
+    }
+
     static List<string> AnaglyphModes = new List<string>
     {
         "Green Magenta",
@@ -76,7 +80,7 @@
     {
         AnaglyphProfile = AnaglyphModes.IndexOf(mode);
         if (AnaglyphProfile < 0) AnaglyphProfile = 0;
-        AnaglyphMode = AnaglyphModes[AnaglyphProfile]; 
+        AnaglyphMode = AnaglyphModes[AnaglyphProfile];
         UpdateOutputFilename();
         StateHasChanged();
     }

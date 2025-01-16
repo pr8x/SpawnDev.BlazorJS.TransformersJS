@@ -1,9 +1,6 @@
 ﻿using Microsoft.AspNetCore.Components;
 using SpawnDev.BlazorJS.JSObjects;
 using SpawnDev.BlazorJS.WebWorkers;
-using static System.Runtime.InteropServices.JavaScript.JSType;
-using System.Reflection.Metadata;
-using System;
 using File = SpawnDev.BlazorJS.JSObjects.File;
 
 namespace SpawnDev.BlazorJS.TransformersJS.Demo.Pages

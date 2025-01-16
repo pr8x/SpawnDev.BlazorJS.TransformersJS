@@ -10,6 +10,9 @@ namespace SpawnDev.BlazorJS.TransformersJS.Demo.Pages
         ElementReference canvasElRef;
         HTMLCanvasElement? canvas = null;
 
+        [Parameter]
+        public EventCallback<bool> ProgressChanged { get; set; }
+
         [Inject]
         DepthEstimationService DepthEstimationService { get; set; }
 
@@ -17,19 +20,13 @@ namespace SpawnDev.BlazorJS.TransformersJS.Demo.Pages
         BlazorJSRuntime JS { get; set; }
 
         [Parameter]
-        public string DepthEstimationModel { get; set; } = "";
-
-        [Parameter]
-        public bool UseWebGPU { get; set; } = true;
+        public string Style { get; set; } = "";
 
         [Parameter]
         public string Source { get; set; } = "";
 
         [Parameter]
-        public string Style { get; set; } = "";
-
-        [Parameter]
-        public int AnaglyphProfile { get; set; } 
+        public int AnaglyphProfile { get; set; }
 
         [Parameter]
         public float Focus3D { get; set; } = 0.5f;
@@ -37,18 +34,17 @@ namespace SpawnDev.BlazorJS.TransformersJS.Demo.Pages
         [Parameter]
         public float Level3D { get; set; } = 1.0f;
 
+        string OutputKey => $"{Source}#{Focus3D}#{Level3D}#{AnaglyphProfile}";
+        string _OutputKeyCurrent = "";
+
         public string GeneratedSource => string.IsNullOrEmpty(_GeneratedSource) ? Source : _GeneratedSource;
 
         AnaglyphRenderer? anaglyphRenderer { get; set; }
 
         string _GeneratedSource = "";
-        bool IsDirty = false;
+        public bool Processing { get; set; }
+        public bool ProcessingFailed { get; set; }
 
-        protected override void OnParametersSet()
-        {
-            Console.WriteLine($"OnParametersSet {IsDirty}");
-            IsDirty = true;
-        }
         public async Task<bool> DownloadImage(string filename, float? quality = null)
         {
             if (anaglyphRenderer == null) return false;
@@ -83,33 +79,49 @@ namespace SpawnDev.BlazorJS.TransformersJS.Demo.Pages
         bool beenRendered = false;
         protected override async Task OnAfterRenderAsync(bool firstRender)
         {
-            Console.WriteLine($"OnAfterRenderAsync: IsDirty {IsDirty}");
-            canvas ??= new HTMLCanvasElement(canvasElRef);
-            if (IsDirty)
+            if (!Processing && _OutputKeyCurrent != OutputKey)
             {
-                IsDirty = false;
+                await Update();
+            }
+        }
+        async Task Update()
+        {
+            var outputKey = OutputKey;
+            if (_OutputKeyCurrent == outputKey || Processing) return;
+            Console.WriteLine("Update()");
+            try
+            {
+                canvas ??= new HTMLCanvasElement(canvasElRef);
                 anaglyphRenderer ??= new AnaglyphRenderer(canvas);
-                try
+                ProcessingFailed = false;
+                Processing = true;
+                await ProgressChanged.InvokeAsync(true);
+                if (!DepthEstimationService.Cached2DZImages.ContainsKey(Source))
                 {
-                    if (!beenRendered)
-                    {
-                        beenRendered = true;
-                        using var image = await HTMLImageElement.CreateFromImageAsync(Source);
-                        anaglyphRenderer.SetInput(image, "2d");
-                        anaglyphRenderer.Render();
-                    }
-                    var imageWithDepth = await DepthEstimationService.ImageTo2DZImage(Source, DepthEstimationModel, UseWebGPU);
-                    anaglyphRenderer.Level3D = Level3D;
-                    anaglyphRenderer.Focus3D = Focus3D;
-                    anaglyphRenderer.ProfileIndex = AnaglyphProfile;
-                    anaglyphRenderer.SetInput(imageWithDepth, "2dz");
+                    using var image = await HTMLImageElement.CreateFromImageAsync(Source);
+                    anaglyphRenderer.SetInput(image, "2d");
                     anaglyphRenderer.Render();
                 }
-                catch (Exception ex)
+                var imageWithDepth = await DepthEstimationService.ImageTo2DZImage(Source);
+                anaglyphRenderer.Level3D = Level3D;
+                anaglyphRenderer.Focus3D = Focus3D;
+                anaglyphRenderer.ProfileIndex = AnaglyphProfile;
+                anaglyphRenderer.SetInput(imageWithDepth, "2dz");
+                anaglyphRenderer.Render();
+            }
+            catch (Exception ex)
+            {
+
+            }
+            finally
+            {
+                Processing = false;
+                _OutputKeyCurrent = outputKey;
+                await ProgressChanged.InvokeAsync(false);
+                if (_OutputKeyCurrent != OutputKey)
                 {
-                    Console.WriteLine($"ImageToAnaglyph error: {ex.Message}");
+                    _ = Update();
                 }
-                StateHasChanged();
             }
         }
     }

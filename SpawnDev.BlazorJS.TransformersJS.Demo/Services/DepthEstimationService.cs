@@ -4,13 +4,54 @@ namespace SpawnDev.BlazorJS.TransformersJS.Demo.Services
 {
     public class DepthEstimationService
     {
-        Pipelines? Pipelines = null;
-        public Dictionary<string, ModelLoadProgress> ModelProgresses { get; } = new();
-        ActionCallback<ModelLoadProgress> OnProgress => new ActionCallback<ModelLoadProgress>(Pipeline_OnProgress);
-        Dictionary<string, DepthEstimationPipeline> DepthEstimationPipelines = new Dictionary<string, DepthEstimationPipeline>();
-        public DepthEstimationService()
+        /// <summary>
+        /// The progress percentage from 0 to 100
+        /// </summary>
+        public float OverallLoadProgress
         {
-
+            get
+            {
+                var total = (float)ModelProgresses.Values.Sum(p => p.Total ?? 0);
+                if (total == 0f) return 0;
+                var loaded = (float)ModelProgresses.Values.Sum(p => p.Loaded ?? 0);
+                return loaded * 100f / total;
+            }
+        }
+        /// <summary>
+        /// True if loading models
+        /// </summary>
+        public bool Loading { get; private set; }
+        /// <summary>
+        /// True if loading models
+        /// </summary>
+        public bool ModelsLoaded => DepthEstimationPipelines.Any();
+        /// <summary>
+        /// Holds the loading progress for models that are loading
+        /// </summary>
+        public Dictionary<string, ModelLoadProgress> ModelProgresses { get; } = new();
+        /// <summary>
+        /// Holds all loaded depth estimation pipelines
+        /// </summary>
+        public Dictionary<string, DepthEstimationPipeline> DepthEstimationPipelines { get; } = new Dictionary<string, DepthEstimationPipeline>();
+        /// <summary>
+        /// The default depth estimation model. Used if no model is specified.
+        /// </summary>
+        public string DefaultDepthEstimationModel { get; set; } = "onnx-community/depth-anything-v2-small";
+        /// <summary>
+        /// Result from a WebGPU support check
+        /// </summary>
+        public bool WebGPUSupported { get; private set; }
+        /// <summary>
+        /// Cache for generated 2DZ images keyed by the image source string
+        /// </summary>
+        public Dictionary<string, HTMLImageElement> Cached2DZImages { get; } = new Dictionary<string, HTMLImageElement>();
+        ActionCallback<ModelLoadProgress> OnProgress => new ActionCallback<ModelLoadProgress>(Pipeline_OnProgress);
+        BlazorJSRuntime JS;
+        Pipelines? Pipelines = null;
+        public DepthEstimationService(BlazorJSRuntime js)
+        {
+            JS = js;
+            WebGPUSupported = !JS.IsUndefined("navigator.gpu?.requestAdapter");
         }
         void Log(string msg, bool newLine = true)
         {
@@ -40,11 +81,15 @@ namespace SpawnDev.BlazorJS.TransformersJS.Demo.Services
             StateHasChanged();
         }
         SemaphoreSlim LoadLimiter = new SemaphoreSlim(1);
-        public async Task<DepthEstimationPipeline> GetDepthEstimationPipeline(string model = "onnx-community/depth-anything-v2-small", bool useWebGPU = true)
+        public async Task<DepthEstimationPipeline> GetDepthEstimationPipeline(string? model = null, bool useWebGPU = true)
         {
             if (string.IsNullOrEmpty(model))
             {
-                model = "onnx-community/depth-anything-v2-small";
+                model = DefaultDepthEstimationModel;
+            }
+            if (!WebGPUSupported)
+            {
+                useWebGPU = false;
             }
             var key = useWebGPU ? $"{model}+webgpu" : model;
             if (DepthEstimationPipelines.TryGetValue(key, out var depthEstimationPipeline))
@@ -54,6 +99,7 @@ namespace SpawnDev.BlazorJS.TransformersJS.Demo.Services
             await LoadLimiter.WaitAsync();
             try
             {
+                Loading = true;
                 if (Pipelines == null)
                 {
                     Log($"Initializing... ", false);
@@ -61,23 +107,27 @@ namespace SpawnDev.BlazorJS.TransformersJS.Demo.Services
                     Log($"Done");
                 }
                 Log($"Depth Estimation Pipeline with WebGPU loading... ", false);
-                depthEstimationPipeline = await Pipelines.DepthEstimationPipeline(model, new PipelineOptions { Device = useWebGPU ? "webgpu" : null, OnProgress = OnProgress });
+                depthEstimationPipeline = await Pipelines.DepthEstimationPipeline(model, new PipelineOptions
+                {
+                    Device = useWebGPU ? "webgpu" : null,
+                    OnProgress = OnProgress,
+                });
                 DepthEstimationPipelines[key] = depthEstimationPipeline;
                 Log($"Done");
-                ModelProgresses.Clear();
-                StateHasChanged();
                 return depthEstimationPipeline;
             }
             finally
             {
+                Loading = false;
+                ModelProgresses.Clear();
+                StateHasChanged();
                 LoadLimiter.Release();
             }
         }
-        Dictionary<string, HTMLImageElement> Results = new Dictionary<string, HTMLImageElement>();
-        public async Task<HTMLImageElement> ImageTo2DZImage(HTMLImageElement image, string model = "onnx-community/depth-anything-v2-small", bool useWebGPU = true)
+        public async Task<HTMLImageElement> ImageTo2DZImage(HTMLImageElement image, string? model = null, bool useWebGPU = true)
         {
             var source = image.Src;
-            if (!Results.TryGetValue(source, out var imageWithDepth))
+            if (!Cached2DZImages.TryGetValue(source, out var imageWithDepth))
             {
                 // get the depth estimation pipeline
                 var DepthEstimationPipeline = await GetDepthEstimationPipeline(model, useWebGPU);
@@ -90,13 +140,13 @@ namespace SpawnDev.BlazorJS.TransformersJS.Demo.Services
                 // create 2D+Z image object url
                 var imageWithDepthObjectUrl = await Create2DZObjectUrl(image, depthMapData, depthWidth, depthHeight);
                 imageWithDepth = await HTMLImageElement.CreateFromImageAsync(imageWithDepthObjectUrl);
-                Results[source] = imageWithDepth;
+                Cached2DZImages[source] = imageWithDepth;
             }
             return imageWithDepth;
         }
-        public async Task<HTMLImageElement> ImageTo2DZImage(string source, string model = "onnx-community/depth-anything-v2-small", bool useWebGPU = true)
+        public async Task<HTMLImageElement> ImageTo2DZImage(string source, string? model = null, bool useWebGPU = true)
         {
-            if (!Results.TryGetValue(source, out var imageWithDepth))
+            if (!Cached2DZImages.TryGetValue(source, out var imageWithDepth))
             {
                 // get image
                 using var image = await HTMLImageElement.CreateFromImageAsync(source);
@@ -111,16 +161,16 @@ namespace SpawnDev.BlazorJS.TransformersJS.Demo.Services
                 // create 2D+Z image object url
                 var imageWithDepthObjectUrl = await Create2DZObjectUrl(image, depthMapData, depthWidth, depthHeight);
                 imageWithDepth = await HTMLImageElement.CreateFromImageAsync(imageWithDepthObjectUrl);
-                Results[source] = imageWithDepth;
+                Cached2DZImages[source] = imageWithDepth;
             }
             return imageWithDepth;
         }
-        async Task<string> Create2DZObjectUrl(HTMLImageElement rgbImage, Uint8Array grayscale1BPPData, int width, int height)
+        async Task<string> Create2DZObjectUrl(HTMLImageElement rgbImage, Uint8Array grayscale1BPPUint8Array, int width, int height)
         {
             var outWidth = width * 2;
             var outHeight = height;
-            var grayscaleDataBytes = grayscale1BPPData.ReadBytes();
-            var depthmapRGBABytes = Grayscale1BPPToRGBA(grayscaleDataBytes, width, height);
+            var grayscale1BPPBytes = grayscale1BPPUint8Array.ReadBytes();
+            var depthmapRGBABytes = Grayscale1BPPToRGBA(grayscale1BPPBytes, width, height);
             using var canvas = new HTMLCanvasElement(outWidth, outHeight);
             using var ctx = canvas.Get2DContext();
             // draw rgb image
@@ -131,10 +181,10 @@ namespace SpawnDev.BlazorJS.TransformersJS.Demo.Services
             var ret = URL.CreateObjectURL(blob);
             return ret;
         }
-        async Task<string> CreateDepthImageObjectUrl(Uint8Array grayscale1BPPData, int width, int height)
+        async Task<string> CreateDepthImageObjectUrl(Uint8Array grayscale1BPPUint8Array, int width, int height)
         {
-            var grayscaleDataBytes = grayscale1BPPData.ReadBytes();
-            var depthmapRGBABytes = Grayscale1BPPToRGBA(grayscaleDataBytes, width, height);
+            var grayscale1BPPBytes = grayscale1BPPUint8Array.ReadBytes();
+            var depthmapRGBABytes = Grayscale1BPPToRGBA(grayscale1BPPBytes, width, height);
             using var canvas = new HTMLCanvasElement(width, height);
             using var ctx = canvas.Get2DContext();
             ctx.PutImageBytes(depthmapRGBABytes, width, height);
