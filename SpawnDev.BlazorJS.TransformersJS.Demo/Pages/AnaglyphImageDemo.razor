@@ -7,12 +7,6 @@
 <div style="padding: 1rem;">
     <h3>2D to Anaglyph</h3>
 
-    <div style="position: relative; display: inline-block;">
-        <AnaglyphImage ProgressChanged="AnaglyphImage_OnProgressChanged" @ref=anaglyphImage Source="@Source2DImage" Focus3D="@Focus3D" Level3D="@Level3D" AnaglyphProfile="@AnaglyphProfile" />
-        <div style="@(DepthEstimationService.ModelsLoaded && anaglyphImage?.Processing != true ? "display: none;" : "") text-align: center; background-color: rgba(15,15,15,0.3); border-radius: 15px; border: 2px solid gray; position: absolute; left: 50%; top: 50%; width: 100px; height: 100px; margin-left: -50px; margin-top: -50px;">
-            <RadzenProgressBarCircular ShowValue="@(!DepthEstimationService.ModelsLoaded)" Mode="@(DepthEstimationService.ModelsLoaded ? ProgressBarMode.Indeterminate: ProgressBarMode.Determinate)" ProgressBarStyle="ProgressBarStyle.Primary" Value="@Math.Round(DepthEstimationService.OverallLoadProgress)" Size="ProgressBarCircularSize.Large" />
-        </div>
-    </div>
     <RadzenStack Style="@(DepthEstimationService.ModelsLoaded ? "" : "display: none;")" Orientation="Orientation.Horizontal" AlignItems="AlignItems.Normal" JustifyContent="JustifyContent.Left" Gap="0.5rem">
         <RadzenStack Orientation="Orientation.Vertical" AlignItems="AlignItems.Normal" JustifyContent="JustifyContent.Left" Gap="0.5rem">
             <RadzenLabel Text="Anaglyph Mode" Component="DropDownBindValue" />
@@ -35,6 +29,12 @@
             </div>
         </RadzenStack>
     </RadzenStack>
+    <div style="position: relative; display: inline-block;">
+        <AnaglyphImage ProgressChanged="AnaglyphImage_OnProgressChanged" @ref=anaglyphImage Source="@Source2DImage" Focus3D="@Focus3D" Level3D="@Level3D" AnaglyphProfile="@AnaglyphProfile" />
+        <div style="@(DepthEstimationService.ModelsLoaded && anaglyphImage?.Processing != true ? "display: none;" : "") text-align: center; background-color: rgba(15,15,15,0.3); border-radius: 15px; border: 2px solid gray; position: absolute; left: 50%; top: 50%; width: 100px; height: 100px; margin-left: -50px; margin-top: -50px;">
+            <RadzenProgressBarCircular ShowValue="@(!DepthEstimationService.ModelsLoaded)" Mode="@(DepthEstimationService.ModelsLoaded ? ProgressBarMode.Indeterminate: ProgressBarMode.Determinate)" ProgressBarStyle="ProgressBarStyle.Primary" Value="@Math.Round(DepthEstimationService.OverallLoadProgress)" Size="ProgressBarCircularSize.Large" />
+        </div>
+    </div>
 </div>
 
 @code {
