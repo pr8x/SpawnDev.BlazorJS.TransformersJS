@@ -25,8 +25,35 @@ namespace SpawnDev.BlazorJS.TransformersJS.Demo.Renderers
         {
             get => AnaglyphProfiles[ProfileIndex];
         }
+
+        // https://github.com/dolphin-emu/dolphin/blob/master/Data/Sys/Shaders/Anaglyph/dubois.glsl
         List<AnaglyphProfile> AnaglyphProfiles = new List<AnaglyphProfile>()
         {
+            //// all
+            // float brightness    = agdata[0];
+            // float contrast      = agdata[1];
+            // float gamma         = agdata[2];
+            //// red channel
+            // float rlr = agdata[3];
+            // float rlg = agdata[4];
+            // float rlb = agdata[5];
+            // float rrr = agdata[6];
+            // float rrg = agdata[7];
+            // float rrb = agdata[8];
+            //// green channel
+            // float glr = agdata[9];
+            // float glg = agdata[10];
+            // float glb = agdata[11];
+            // float grr = agdata[12];
+            // float grg = agdata[13];
+            // float grb = agdata[14];
+            //// blue channel
+            // float blr = agdata[15];
+            // float blg = agdata[16];
+            // float blb = agdata[17];
+            // float brr = agdata[18];
+            // float brg = agdata[19];
+            // float brb = agdata[20];
             new AnaglyphProfile{
                 Name = "Green Magenta",
                 Data = new float[]{

@@ -28,6 +28,12 @@ namespace SpawnDev.BlazorJS.TransformersJS
         [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
         [JsonPropertyName("progress_callback")]
         public ActionCallback<ModelLoadProgress>? OnProgress { get; set; }
+
+
+
+        [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+        [JsonPropertyName("dtype")]
+        public Union<FromPretrainedSubOptions, string>? Dtype { get; set; }
     }
     public class FromPretrainedSubOptions
     {

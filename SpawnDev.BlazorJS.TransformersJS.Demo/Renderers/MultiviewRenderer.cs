@@ -246,25 +246,25 @@ namespace SpawnDev.BlazorJS.TransformersJS.Demo.Renderers
             var OutAspectRatio = (float)outHeight / (float)outWidth;
             var views_in_cnt = frameCols * frameRows;
             float viewAspectRatio = (float)viewHeight / (float)viewWidth;
-            if (frameCols == frameRows * 2f)
-            {
-                // check for half width views
-                if (viewAspectRatio > 0.8)
-                {
-                    // appears to be half width so double the view width
-                    viewWidth *= 2;
-                    viewAspectRatio = (float)viewHeight / (float)viewWidth;
-                }
-            }
-            else if (frameCols * 2f == frameRows)
-            {
-                // check for half height views
-                if (viewWidth > viewHeight * 2f)
-                {
-                    viewHeight *= 2;
-                    viewAspectRatio = (float)viewHeight / (float)viewWidth;
-                }
-            }
+            //if (frameCols == frameRows * 2f)
+            //{
+            //    // check for half width views
+            //    if (viewAspectRatio > 0.8)
+            //    {
+            //        // appears to be half width so double the view width
+            //        viewWidth *= 2;
+            //        viewAspectRatio = (float)viewHeight / (float)viewWidth;
+            //    }
+            //}
+            //else if (frameCols * 2f == frameRows)
+            //{
+            //    // check for half height views
+            //    if (viewWidth > viewHeight * 2f)
+            //    {
+            //        viewHeight *= 2;
+            //        viewAspectRatio = (float)viewHeight / (float)viewWidth;
+            //    }
+            //}
             var videoScaleU = 1f;
             var videoScaleV = 1f;
             var videoPaddingU = 0f;

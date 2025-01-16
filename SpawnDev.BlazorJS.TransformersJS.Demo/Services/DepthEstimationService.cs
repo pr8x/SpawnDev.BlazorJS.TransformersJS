@@ -2,6 +2,11 @@
 
 namespace SpawnDev.BlazorJS.TransformersJS.Demo.Services
 {
+    /// <summary>
+    /// This class handles the loading and caching of depth estimation pipelines.<br/>
+    /// It also has methods for creating and caching 2D+Z images from 2D images<br/>
+    /// It provides events indicating the progress of loading models
+    /// </summary>
     public class DepthEstimationService
     {
         /// <summary>
@@ -87,7 +92,7 @@ namespace SpawnDev.BlazorJS.TransformersJS.Demo.Services
             {
                 useWebGPU = false;
             }
-            var key = useWebGPU ? $"{model}+webgpu" : model;
+            var key = $"{model}+{useWebGPU}";
             if (DepthEstimationPipelines.TryGetValue(key, out var depthEstimationPipeline))
             {
                 return depthEstimationPipeline;
@@ -105,6 +110,7 @@ namespace SpawnDev.BlazorJS.TransformersJS.Demo.Services
                 {
                     Device = useWebGPU ? "webgpu" : null,
                     OnProgress = OnProgress,
+                    //Dtype = "q4",
                 });
                 DepthEstimationPipelines[key] = depthEstimationPipeline;
                 return depthEstimationPipeline;
