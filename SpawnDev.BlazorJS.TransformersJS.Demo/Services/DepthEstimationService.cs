@@ -53,10 +53,6 @@ namespace SpawnDev.BlazorJS.TransformersJS.Demo.Services
             JS = js;
             WebGPUSupported = !JS.IsUndefined("navigator.gpu?.requestAdapter");
         }
-        void Log(string msg, bool newLine = true)
-        {
-            Console.WriteLine(msg);
-        }
         public event Action OnStateChange = default!;
         void StateHasChanged()
         {
@@ -102,18 +98,15 @@ namespace SpawnDev.BlazorJS.TransformersJS.Demo.Services
                 Loading = true;
                 if (Pipelines == null)
                 {
-                    Log($"Initializing... ", false);
                     Pipelines = await Pipelines.Init();
-                    Log($"Done");
                 }
-                Log($"Depth Estimation Pipeline with WebGPU loading... ", false);
+                // Load Depth Estimation Pipeline
                 depthEstimationPipeline = await Pipelines.DepthEstimationPipeline(model, new PipelineOptions
                 {
                     Device = useWebGPU ? "webgpu" : null,
                     OnProgress = OnProgress,
                 });
                 DepthEstimationPipelines[key] = depthEstimationPipeline;
-                Log($"Done");
                 return depthEstimationPipeline;
             }
             finally
