@@ -15,7 +15,7 @@ namespace SpawnDev.BlazorJS.TransformersJS.Demo.Layout
                 OnTitleChanged?.Invoke();
             }
         }
-        string _Title { get; set; } = "";
+        string _Title { get; set; } = "SpawnDev.BlazorJS.TransformersJS";
         public delegate void AfterRender(MainLayout mainLayout, bool firstRender);
         public event AfterRender OnAfterRender;
         public event Action OnTitleChanged;
