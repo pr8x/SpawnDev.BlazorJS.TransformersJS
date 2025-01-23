@@ -3,7 +3,7 @@ using SpawnDev.BlazorJS.JSObjects;
 using SpawnDev.BlazorJS.TransformersJS.Demo.Renderers;
 using SpawnDev.BlazorJS.TransformersJS.Demo.Services;
 
-namespace SpawnDev.BlazorJS.TransformersJS.Demo.Pages
+namespace SpawnDev.BlazorJS.TransformersJS.Demo.Components
 {
     public partial class AnaglyphImage
     {
