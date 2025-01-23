@@ -22,7 +22,7 @@
             <input @ref=fileInputRef accept="image/*" type="file" disabled="@(busy || !beenInit)" style="width: 100%;" />
         </RadzenStack>
         <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Normal" JustifyContent="JustifyContent.Left" Gap="0.5rem" Style="padding: 1rem 0;">
-            <button onclick="@RunIt" disabled="@(busy || !beenInit || File == null)">Create 2D+Z Image</button>
+            <button @onclick="RunIt" disabled="@(busy || !beenInit || File == null)">Create 2D+Z Image</button>
         </RadzenStack>
         <div style="padding: 1rem 0;">
             <button style="margin: 2px;" @onclick="Download2DZImage" disabled="@(busy || !beenInit || File == null || string.IsNullOrEmpty(resultObjectUrl))">Download 2D+Z: @(outputFileName)</button><br/>

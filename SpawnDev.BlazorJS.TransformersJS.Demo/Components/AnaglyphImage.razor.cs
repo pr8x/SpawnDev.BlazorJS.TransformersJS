@@ -14,10 +14,10 @@ namespace SpawnDev.BlazorJS.TransformersJS.Demo.Components
         public EventCallback<bool> ProgressChanged { get; set; }
 
         [Inject]
-        DepthEstimationService DepthEstimationService { get; set; }
+        DepthEstimationService DepthEstimationService { get; set; } = default!;
 
         [Inject]
-        BlazorJSRuntime JS { get; set; }
+        BlazorJSRuntime JS { get; set; } = default!;
 
         [Parameter]
         public string Style { get; set; } = "";
@@ -76,7 +76,6 @@ namespace SpawnDev.BlazorJS.TransformersJS.Demo.Components
             a.Click();
             document.Body.RemoveChild(a);
         }
-        bool beenRendered = false;
         protected override async Task OnAfterRenderAsync(bool firstRender)
         {
             if (!Processing && _OutputKeyCurrent != OutputKey)
@@ -108,7 +107,7 @@ namespace SpawnDev.BlazorJS.TransformersJS.Demo.Components
                 anaglyphRenderer.SetInput(imageWithDepth, "2dz");
                 anaglyphRenderer.Render();
             }
-            catch (Exception ex)
+            catch
             {
 
             }

@@ -37,7 +37,7 @@
     // https://huggingface.co/Xenova/speecht5_tts
 
     [Inject]
-    BlazorJSRuntime JS { get; set; }
+    BlazorJSRuntime JS { get; set; } = default!;
     string input = "";
     string output = "";
     bool disabled = false;
