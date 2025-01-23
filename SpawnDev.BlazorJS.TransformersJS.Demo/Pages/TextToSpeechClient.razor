@@ -2,24 +2,28 @@
 @using SpawnDev.BlazorJS.JSObjects
 @implements IDisposable
 
-<h3>Text To Speech Client</h3>
-
 <div class="container">
+    <h3>Text To Speech</h3>
+    <p>
+        This demonstrates the use of Transformers.js and the 
+        <a href="https://huggingface.co/Xenova/speecht5_tts">Xenova/speecht5_tts</a> model for text to speech generation.
+    </p>
+    <p>
+        <a href="https://github.com/LostBeard/SpawnDev.BlazorJS.TransformersJS/blob/main/SpawnDev.BlazorJS.TransformersJS.Demo/Pages/TextToSpeechClient.razor">Page source</a>
+    </p>
     <div>
-        <textarea @bind=input placeholder="Enter text to be read"></textarea>
+        <textarea disabled="@disabled" @bind=input placeholder="Enter text to be read"></textarea>
     </div>
     <div>
-        <select @bind=selectedSpeaker>
+        <select disabled="@disabled" @bind=selectedSpeaker>
             @foreach (var option in Speakers)
             {
                 <option selected="@(selectedSpeaker == option.Value)" value="@option.Value">@option.Key</option>
             }
         </select>
+        <button disabled="@disabled" @onclick="Button_OnClick">Generate</button>
     </div>
-    <div>
-        <button @onclick="Button_OnClick">Generate</button>
-    </div>
-    <div>
+    <div style="@(disabled ? "display: none;" : "")">
         <audio @ref=audioPlayerRef controls>
             <source @ref=audioSourceRef type=@mimeType></source>
         </audio>
@@ -44,10 +48,9 @@
     string modelId = "Xenova/speecht5_tts";
     string vocoderId = "Xenova/speecht5_hifigan";
     string mimeType = "audio/wav";
-    string embeddingsBasePath = "https://huggingface.co/datasets/Xenova/transformers.js-docs/resolve/main/speaker_embeddings.bin";
+    string embeddingsBasePath = "https://huggingface.co/datasets/Xenova/cmu-arctic-xvectors-extracted/resolve/main/";
     const string DEFAULT_SPEAKER = "cmu_us_slt_arctic-wav-arctic_a0001";
     string selectedSpeaker = DEFAULT_SPEAKER;
-    Tensor<Float32Array>? speakerEmbeddings = null;
     AutoTokenizer? tokenizerInstance = null;
     SpeechT5ForTextToSpeech? modelInstance = null;
     SpeechT5HifiGan? vocoderInstance = null;
@@ -64,25 +67,43 @@
     };
     async Task Button_OnClick()
     {
-        using var wavBlob = await TextToWav(input);
-        if (!string.IsNullOrEmpty(output))
-        {
-            URL.RevokeObjectURL(output);
-        }
-        output = URL.CreateObjectURL(wavBlob);
-        SetAudioSource(output);
+        using var wavBlob = await TextToWav(input, selectedSpeaker);
+        SetAudioSource(wavBlob);
     }
-    async Task<Blob> TextToWav(string inputText)
+    async Task<Blob> TextToWav(string inputText, string speakerId)
     {
-        await Init();
-        using var tokenizerResult = tokenizerInstance!.Call(input);
-        using var inputIds = tokenizerResult.InputIds;
-        using var result = await modelInstance!.GenerateSpeech(inputIds, speakerEmbeddings!, new GenerateSpeechOptions { Vocoder = vocoderInstance! });
-        using var waveform = result.Waveform;
-        using var waveformData = waveform.Data;
-        using var wavArrayBuffer = AudioUtilities.EncodeWAV(waveformData);
-        var wavBlob = new Blob(new ArrayBuffer[] { wavArrayBuffer }, new BlobOptions { Type = "audio/wav" });
-        return wavBlob;
+        disabled = true;
+        StateHasChanged();
+        try
+        {
+            await Init();
+            using var speakerEmbeddings = await GetSpeakerEmbeddings(speakerId);
+            using var tokenizerResult = tokenizerInstance!.Call(input);
+            using var inputIds = tokenizerResult.InputIds;
+            using var result = await modelInstance!.GenerateSpeech(inputIds, speakerEmbeddings!, new GenerateSpeechOptions { Vocoder = vocoderInstance! });
+            using var waveform = result.Waveform;
+            using var waveformData = waveform.Data;
+            using var wavArrayBuffer = AudioUtilities.EncodeWAV(waveformData);
+            var wavBlob = new Blob(new ArrayBuffer[] { wavArrayBuffer }, new BlobOptions { Type = "audio/wav" });
+            return wavBlob;
+        }
+        finally
+        {
+            disabled = false;
+            StateHasChanged();
+        }
+    }
+    async Task<Tensor<Float32Array>> GetSpeakerEmbeddings(string speakerId)
+    {
+        using var response = await JS.Fetch($"{embeddingsBasePath}{speakerId}.bin");
+        if (!response.Ok)
+        {
+            throw new Exception("Speaker not found");
+        }
+        using var arrayBuffer = await response.ArrayBuffer();
+        using var speakerEmbeddingsData = new Float32Array(arrayBuffer);
+        var speakerEmbeddings = new Tensor<Float32Array>("float32", speakerEmbeddingsData, [1, (int)speakerEmbeddingsData.Length]);
+        return speakerEmbeddings;
     }
     async Task Init()
     {
@@ -105,18 +126,14 @@
                 Dtype = "fp32",
                 OnProgress = OnProgress,
             });
-
-        using var response = await JS.Fetch(embeddingsBasePath);
-        using var arrayBuffer = await response.ArrayBuffer();
-        using var speakerEmbeddingsData = new Float32Array(arrayBuffer);
-        speakerEmbeddings = new Tensor<Float32Array>("float32", speakerEmbeddingsData, [1, (int)speakerEmbeddingsData.Length]);
-        // await other tasks
+        // await tasks
         tokenizerInstance = await tokenizerTask;
         modelInstance = await modelTask;
         vocoderInstance = await vocoderTask;
         ModelProgresses.Clear();
         ready = true;
         StateHasChanged();
+        await Task.Delay(200);
     }
     public Dictionary<string, ModelLoadProgress> ModelProgresses { get; } = new();
     void Pipeline_OnProgress(ModelLoadProgress obj)
@@ -137,11 +154,16 @@
         }
         StateHasChanged();
     }
-    void SetAudioSource(string source, string mimeType = "audio/wav")
+    void SetAudioSource(Blob audioBlob)
     {
+        if (!string.IsNullOrEmpty(output))
+        {
+            URL.RevokeObjectURL(output);
+        }
+        output = URL.CreateObjectURL(audioBlob);
         using var aSource = new HTMLSourceElement(audioSourceRef);
-        aSource.Src = source;
-        aSource.Type = mimeType;
+        aSource.Src = output;
+        aSource.Type = audioBlob.Type;
         using var aPlayer = new HTMLAudioElement(audioPlayerRef);
         aPlayer.Load();
     }

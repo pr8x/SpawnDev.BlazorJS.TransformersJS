@@ -1,7 +1,14 @@
 ﻿@page "/DepthFrom2D"
 
-<div style="padding: 1rem;">
+<div class="container">
     <h3>2D to 2D+Z</h3>
+    <p>
+        This demonstrates the use of Transformers.js and various depth-estimation
+        models for depth estimation.
+    </p>
+    <p>
+        <a href="https://github.com/LostBeard/SpawnDev.BlazorJS.TransformersJS/blob/main/SpawnDev.BlazorJS.TransformersJS.Demo/Pages/DepthFrom2D.razor">Page source</a>
+    </p>
     <div>
         <RadzenStack Orientation="Orientation.Vertical" AlignItems="AlignItems.Normal" JustifyContent="JustifyContent.Left" Gap="0.5rem">
             <RadzenLabel Text="Select an ONNX Depth Estimation Model" Component="DropDownBindValue" />
@@ -18,8 +25,8 @@
             <button onclick="@RunIt" disabled="@(busy || !beenInit || File == null)">Create 2D+Z Image</button>
         </RadzenStack>
         <div style="padding: 1rem 0;">
-            <button style="margin: 2px;" onclick="@Download2DZImage" disabled="@(busy || !beenInit || File == null || string.IsNullOrEmpty(resultObjectUrl))">Download 2D+Z: @(outputFileName)</button><br/>
-            <button style="margin: 2px;" onclick="@DownloadDepthmap" disabled="@(busy || !beenInit || File == null || string.IsNullOrEmpty(depthObjectUrl))">Download Depthmap: @(depthFileName)</button>
+            <button style="margin: 2px;" @onclick="Download2DZImage" disabled="@(busy || !beenInit || File == null || string.IsNullOrEmpty(resultObjectUrl))">Download 2D+Z: @(outputFileName)</button><br/>
+            <button style="margin: 2px;" @onclick="DownloadDepthmap" disabled="@(busy || !beenInit || File == null || string.IsNullOrEmpty(depthObjectUrl))">Download Depthmap: @(depthFileName)</button>
         </div>
     </div>
     <div style="padding: 0.5rem 0; max-width: 600px;">

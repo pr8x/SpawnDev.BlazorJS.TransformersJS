@@ -1,7 +1,7 @@
 ﻿using SpawnDev.BlazorJS.JSObjects;
 using System.Reflection;
 
-namespace SpawnDev.BlazorJS.TransformersJS.Demo.Pages
+namespace SpawnDev.BlazorJS.TransformersJS.Demo
 {
     class WebGLUtilities
     {
@@ -33,7 +33,7 @@ namespace SpawnDev.BlazorJS.TransformersJS.Demo.Pages
         static WebGLProgram? CreateProgram(WebGLRenderingContext gl, List<WebGLShader> shaders, string[]? optAttribs, int?[]? optLocations)
         {
             var program = gl.CreateProgram();
-            foreach(var shader in shaders)
+            foreach (var shader in shaders)
             {
                 gl.AttachShader(program, shader);
             }

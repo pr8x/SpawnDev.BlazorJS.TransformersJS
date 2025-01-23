@@ -33,8 +33,4 @@
 		<ProjectReference Include="..\SpawnDev.BlazorJS.TransformersJS\SpawnDev.BlazorJS.TransformersJS.csproj" />
 	</ItemGroup>
 
-	<ItemGroup>
-	  <Folder Include="Pages\TextToSpeechClientExample\" />
-	</ItemGroup>
-
 </Project>
