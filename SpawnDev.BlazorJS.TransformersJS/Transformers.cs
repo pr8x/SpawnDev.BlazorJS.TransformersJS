@@ -1,42 +1,54 @@
 ﻿using Microsoft.JSInterop;
-using SpawnDev.BlazorJS.IJSInProcessObjectReferenceAnyKey;
-using System.Text.Json.Serialization;
 
 namespace SpawnDev.BlazorJS.TransformersJS
 {
-    public class Pipelines : JSObject
+    public class Transformers : JSObject
     {
+        /// <summary>
+        /// The global variable name the import transformers.js module will be saved as
+        /// </summary>
+        public const string GlobalModuleName = nameof(Transformers);
+        /// <summary>
+        /// Used to access the Blazor WebAssembly Javascript Runtime
+        /// </summary>
         static BlazorJSRuntime JS => BlazorJSRuntime.JS;
         /// <summary>
         /// Transformers.js bundled with this library<br/>
         /// Downloaded from:<br/>
-        /// https://cdn.jsdelivr.net/npm/@huggingface/transformers
+        /// https://cdn.jsdelivr.net/npm/@huggingface/transformers@3.3.2
         /// </summary>
-        public static string LatestBundledVersionSrc { get; } = $"./_content/SpawnDev.BlazorJS.TransformersJS/transformers.js";
+        public static string LatestBundledVersionSrc { get; } = $"./_content/SpawnDev.BlazorJS.TransformersJS/transformers-3.3.2.js";
         /// <summary>
         /// Transformers.js CDN URL<br/>
-        /// https://cdn.jsdelivr.net/npm/@huggingface/transformers
+        /// https://cdn.jsdelivr.net/npm/@huggingface/transformers<br/>
+        /// To get a specific version use the @ tag:<br/>
+        /// https://cdn.jsdelivr.net/npm/@huggingface/transformers@3.3.2 
         /// </summary>
         public static string LatestCDNVersionSrc { get; } = $"https://cdn.jsdelivr.net/npm/@huggingface/transformers";
         /// <summary>
         /// Deserialization constructor
         /// </summary>
         /// <param name="_ref"></param>
-        public Pipelines(IJSInProcessObjectReference _ref) : base(_ref) { }
-        public static bool IsInit => !JS.IsUndefined("Pipelines");
-        
-        public static async Task<Pipelines> Init(string? srcUrl = null)
+        public Transformers(IJSInProcessObjectReference _ref) : base(_ref) { }
+        /// <summary>
+        /// Returns true if the library has been successfully initialized
+        /// </summary>
+        public static bool IsInit => !JS.IsUndefined(GlobalModuleName);
+        /// <summary>
+        /// This method will import the transformers.js module using a dynamic import call
+        /// </summary>
+        /// <param name="srcUrl"></param>
+        /// <returns></returns>
+        /// <exception cref="Exception"></exception>
+        public static async Task<Transformers> Init(string? srcUrl = null)
         {
-            // var transformersModule = await import('https://cdn.jsdelivr.net/npm/@huggingface/transformers')
             srcUrl = srcUrl ?? LatestBundledVersionSrc;
-            var pipelines = JS.Get<Pipelines>("Pipelines");
+            var pipelines = JS.Get<Transformers>(GlobalModuleName);
             if (pipelines != null) return pipelines;
-            var module = await JS.Import(LatestBundledVersionSrc);
-            if (module == null) throw new Exception("WebTorrentService could not be initialized.");
-            //var WebTorrentClass = module.GetExport<Function>("default");
-            // set WebTorrent on the global scope so it can be used globally
-            JS.Set("Pipelines", module);
-            pipelines = JS.Get<Pipelines>("Pipelines");
+            pipelines = await JS.Import<Transformers>(LatestBundledVersionSrc);
+            if (pipelines == null) throw new Exception("WebTorrentService could not be initialized.");
+            // set transformers.js module to a global variable
+            JS.Set(GlobalModuleName, pipelines);
             return pipelines;
         }
         //The task defining which pipeline will be returned.Currently accepted tasks are:
@@ -63,9 +75,9 @@ namespace SpawnDev.BlazorJS.TransformersJS
         //"zero-shot-image-classification": will return a ZeroShotImageClassificationPipeline.
         //"zero-shot-object-detection": will return a ZeroShotObjectDetectionPipeline.
         public static Task<TPipeline> Pipeline<TPipeline>(string task, string? model = null, PipelineOptions? pipelineOptions = null) where TPipeline : Pipeline 
-            => pipelineOptions == null ? JS.CallAsync<TPipeline>("Pipelines.pipeline", task, model) : JS.CallAsync<TPipeline>("Pipelines.pipeline", task, model, pipelineOptions);
-        public static Task<TPipeline> Pipeline2<TPipeline>(string task, string? model = null, PipelineOptions? pipelineOptions = null) 
-    => pipelineOptions == null ? JS.CallAsync<TPipeline>("Pipelines.pipeline", task, model) : JS.CallAsync<TPipeline>("Pipelines.pipeline", task, model, pipelineOptions);
+            => pipelineOptions == null ? JS.CallAsync<TPipeline>($"{GlobalModuleName}.pipeline", task, model) : JS.CallAsync<TPipeline>($"{GlobalModuleName}.pipeline", task, model, pipelineOptions);
+        //public static Task<TPipeline> Pipeline2<TPipeline>(string task, string? model = null, PipelineOptions? pipelineOptions = null) 
+        //    => pipelineOptions == null ? JS.CallAsync<TPipeline>($"{GlobalModuleName}.pipeline", task, model) : JS.CallAsync<TPipeline>($"{GlobalModuleName}.pipeline", task, model, pipelineOptions);
 
         public Task<DepthEstimationPipeline> DepthEstimationPipeline(string? model = null, PipelineOptions? pipelineOptions = null) => Pipeline<DepthEstimationPipeline>("depth-estimation", model, pipelineOptions);
     }

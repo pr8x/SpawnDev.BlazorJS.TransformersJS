@@ -50,9 +50,8 @@ namespace SpawnDev.BlazorJS.TransformersJS.Demo.Services
         /// Cache for generated 2DZ images keyed by the image source string
         /// </summary>
         public Dictionary<string, HTMLImageElement> Cached2DZImages { get; } = new Dictionary<string, HTMLImageElement>();
-        ActionCallback<ModelLoadProgress> OnProgress => new ActionCallback<ModelLoadProgress>(Pipeline_OnProgress);
         BlazorJSRuntime JS;
-        Pipelines? Pipelines = null;
+        Transformers? Transformers = null;
         public DepthEstimationService(BlazorJSRuntime js)
         {
             JS = js;
@@ -98,15 +97,16 @@ namespace SpawnDev.BlazorJS.TransformersJS.Demo.Services
                 return depthEstimationPipeline;
             }
             await LoadLimiter.WaitAsync();
+            using var OnProgress = new ActionCallback<ModelLoadProgress>(Pipeline_OnProgress);
             try
             {
                 Loading = true;
-                if (Pipelines == null)
+                if (Transformers == null)
                 {
-                    Pipelines = await Pipelines.Init();
+                    Transformers = await Transformers.Init();
                 }
                 // Load Depth Estimation Pipeline
-                depthEstimationPipeline = await Pipelines.DepthEstimationPipeline(model, new PipelineOptions
+                depthEstimationPipeline = await Transformers.DepthEstimationPipeline(model, new PipelineOptions
                 {
                     Device = useWebGPU ? "webgpu" : null,
                     OnProgress = OnProgress,

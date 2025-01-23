@@ -22,7 +22,7 @@ namespace SpawnDev.BlazorJS.TransformersJS.Demo.Pages
         bool busy = false;
         string logMessage = "";
         string outputFileName = "depthmap.png";
-        Pipelines? Pipelines = null;
+        Transformers? Transformers = null;
         //DepthEstimationPipeline? DepthEstimationPipeline = null;
         string? depthObjectUrl = null;
 
@@ -59,11 +59,11 @@ namespace SpawnDev.BlazorJS.TransformersJS.Demo.Pages
         ActionCallback<ModelLoadProgress> OnProgress => new ActionCallback<ModelLoadProgress>(Pipeline_OnProgress);
         protected override async Task OnAfterRenderAsync(bool firstRender)
         {
-            if (!beenInit && !busy && Pipelines == null)
+            if (!beenInit && !busy && Transformers == null)
             {
                 busy = true;
-                Log($"Pipelines initializing... ", false);
-                Pipelines = await Pipelines.Init();
+                Log($"Transformers initializing... ", false);
+                Transformers = await Transformers.Init();
                 Log($"Done");
                 busy = false;
                 StateHasChanged();
@@ -78,7 +78,7 @@ namespace SpawnDev.BlazorJS.TransformersJS.Demo.Pages
         MultiModalityCausalLM? model = null;
         async Task LoadModel()
         {
-            if (Pipelines == null) return;
+            if (Transformers == null) return;
             busy = true;
             try
             {
@@ -116,27 +116,11 @@ namespace SpawnDev.BlazorJS.TransformersJS.Demo.Pages
                     Device = deviceOpts,
                     Dtype = opts,
                 };
-                model = await Pipelines.Pipeline2<MultiModalityCausalLM>("any-to-any", JanusModelId);
-                JS.Log("_model", model);
-                JS.Set("_model", model);
-                processor = await AutoProcessor.FromPretrained(JanusModelId, options);
-                JS.Log("_processor", processor);
-                JS.Set("_processor", processor);
             }
             catch (Exception ex)
             {
                 Log($"Error: {ex.Message}");
             }
-            //try
-            //{
-            //    Log($"Depth Estimation Pipeline with WebGPU loading... ", false);
-            //    DepthEstimationPipeline = await Pipelines.DepthEstimationPipeline(DepthAnythingV2Small, new PipelineOptions { Device = "webgpu" });
-            //    Log($"Done");
-            //}
-            //catch
-            //{
-            //    Log($"Error");
-            //}
             beenInit = true;
             busy = false;
             StateHasChanged();

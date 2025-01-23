@@ -9,17 +9,8 @@ namespace SpawnDev.BlazorJS.TransformersJS
         /// </summary>
         /// <param name="_ref"></param>
         public AutoProcessor(IJSInProcessObjectReference _ref) : base(_ref) { }
-
-        public static Task<AutoProcessor> FromPretrained(string modelId, FromPretrainedOptions? options = null)
-        {
-            var ret = JS.CallAsync<AutoProcessor>("Pipelines.AutoProcessor.from_pretrained", modelId, options);
-            return ret;
-        }
-        public static Task<AutoProcessor> FromPretrained(string modelId, PipelineOptions? options = null)
-        {
-            var ret = JS.CallAsync<AutoProcessor>("Pipelines.AutoProcessor.from_pretrained", modelId, options);
-            return ret;
-        }
+        public static Task<AutoProcessor> FromPretrained(string modelId, FromPretrainedOptions? options = null) => JS.CallAsync<AutoProcessor>("Transformers.AutoProcessor.from_pretrained", modelId, options);
+        public static Task<AutoProcessor> FromPretrained(string modelId, PipelineOptions? options = null) => JS.CallAsync<AutoProcessor>("Transformers.AutoProcessor.from_pretrained", modelId, options);
     }
 
 }

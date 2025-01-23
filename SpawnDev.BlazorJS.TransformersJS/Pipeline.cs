@@ -17,8 +17,17 @@ namespace SpawnDev.BlazorJS.TransformersJS
         /// Calls JS object's dispose() method
         /// </summary>
         public void DisposeJS() => JSRef!.CallVoid("dispose");
-
-        public Task<JSObject> _Call(params object[] args) => _Call<JSObject>(args);
+        /// <summary>
+        /// Runs the pipeline _call method asynchronously
+        /// </summary>
+        /// <param name="args"></param>
+        /// <returns></returns>
         public Task<T> _Call<T>(params object[] args) => JSRef!.CallAsync<T>("_call.apply", JSRef, args);
+        /// <summary>
+        /// Runs the pipeline _call method synchronously
+        /// </summary>
+        /// <param name="args"></param>
+        /// <returns></returns>
+        public T _CallSync<T>(params object[] args) => JSRef!.Call<T>("_call.apply", JSRef, args);
     }
 }

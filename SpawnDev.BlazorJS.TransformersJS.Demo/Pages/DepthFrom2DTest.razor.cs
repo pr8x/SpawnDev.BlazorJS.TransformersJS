@@ -19,7 +19,7 @@ namespace SpawnDev.BlazorJS.TransformersJS.Demo.Pages
         ElementReference fileInputRef;
         HTMLInputElement? fileInput;
         string outputFileName = "";
-        Pipelines? Pipelines = null;
+        Transformers? Transformers = null;
         DepthEstimationPipeline? DepthEstimationPipeline = null;
         File? File = null;
         string? fileObjectUrl = null;
@@ -96,10 +96,10 @@ namespace SpawnDev.BlazorJS.TransformersJS.Demo.Pages
             busy = true;
             StateHasChanged();
             ModelKey = key;
-            if (Pipelines == null)
+            if (Transformers == null)
             {
                 Log($"Initializing... ", false);
-                Pipelines = await Pipelines.Init();
+                Transformers = await Transformers.Init();
                 Log($"Done");
             }
             if (!DepthEstimationPipelines.TryGetValue(key, out var pipeline))
@@ -107,7 +107,7 @@ namespace SpawnDev.BlazorJS.TransformersJS.Demo.Pages
                 try
                 {
                     Log($"Depth Estimation Pipeline with WebGPU loading... ", false);
-                    pipeline = await Pipelines.DepthEstimationPipeline(SelectedModel, new PipelineOptions { Device = UseWebGPU ? "webgpu" : null, OnProgress = OnProgress });
+                    pipeline = await Transformers.DepthEstimationPipeline(SelectedModel, new PipelineOptions { Device = UseWebGPU ? "webgpu" : null, OnProgress = OnProgress });
                     DepthEstimationPipelines[key] = pipeline;
                     Log($"Done");
                 }

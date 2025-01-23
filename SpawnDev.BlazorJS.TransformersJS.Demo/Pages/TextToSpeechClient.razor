@@ -1,0 +1,158 @@
+﻿@page "/TextToSpeechClient"
+@using SpawnDev.BlazorJS.JSObjects
+@implements IDisposable
+
+<h3>Text To Speech Client</h3>
+
+<div class="container">
+    <div>
+        <textarea @bind=input placeholder="Enter text to be read"></textarea>
+    </div>
+    <div>
+        <select @bind=selectedSpeaker>
+            @foreach (var option in Speakers)
+            {
+                <option selected="@(selectedSpeaker == option.Value)" value="@option.Value">@option.Key</option>
+            }
+        </select>
+    </div>
+    <div>
+        <button @onclick="Button_OnClick">Generate</button>
+    </div>
+    <div>
+        <audio @ref=audioPlayerRef controls>
+            <source @ref=audioSourceRef type=@mimeType></source>
+        </audio>
+    </div>
+    <div>
+        <ModelLoadView ModelProgresses="@ModelProgresses" />
+    </div>
+</div>
+
+@code {
+    // https://huggingface.co/Xenova/speecht5_tts
+
+    [Inject]
+    BlazorJSRuntime JS { get; set; }
+    string input = "";
+    string output = "";
+    bool disabled = false;
+    bool ready = false;
+    bool isLoading => !ready;
+    ElementReference audioPlayerRef;
+    ElementReference audioSourceRef;
+    string modelId = "Xenova/speecht5_tts";
+    string vocoderId = "Xenova/speecht5_hifigan";
+    string mimeType = "audio/wav";
+    string embeddingsBasePath = "https://huggingface.co/datasets/Xenova/transformers.js-docs/resolve/main/speaker_embeddings.bin";
+    const string DEFAULT_SPEAKER = "cmu_us_slt_arctic-wav-arctic_a0001";
+    string selectedSpeaker = DEFAULT_SPEAKER;
+    Tensor<Float32Array>? speakerEmbeddings = null;
+    AutoTokenizer? tokenizerInstance = null;
+    SpeechT5ForTextToSpeech? modelInstance = null;
+    SpeechT5HifiGan? vocoderInstance = null;
+    bool BeenInit = false;
+    Dictionary<string, string> Speakers = new Dictionary<string, string>
+    {
+        { "US female 1", "cmu_us_slt_arctic-wav-arctic_a0001" },
+        { "US female 2", "cmu_us_clb_arctic-wav-arctic_a0001" },
+        { "US male 1", "cmu_us_bdl_arctic-wav-arctic_a0003" },
+        { "US male 2", "cmu_us_rms_arctic-wav-arctic_a0003" },
+        { "Canadian male", "cmu_us_jmk_arctic-wav-arctic_a0002" },
+        { "Scottish male", "cmu_us_awb_arctic-wav-arctic_b0002" },
+        { "Indian male", "cmu_us_ksp_arctic-wav-arctic_a0007" },
+    };
+    async Task Button_OnClick()
+    {
+        using var wavBlob = await TextToWav(input);
+        if (!string.IsNullOrEmpty(output))
+        {
+            URL.RevokeObjectURL(output);
+        }
+        output = URL.CreateObjectURL(wavBlob);
+        SetAudioSource(output);
+    }
+    async Task<Blob> TextToWav(string inputText)
+    {
+        await Init();
+        using var tokenizerResult = tokenizerInstance!.Call(input);
+        using var inputIds = tokenizerResult.InputIds;
+        using var result = await modelInstance!.GenerateSpeech(inputIds, speakerEmbeddings!, new GenerateSpeechOptions { Vocoder = vocoderInstance! });
+        using var waveform = result.Waveform;
+        using var waveformData = waveform.Data;
+        using var wavArrayBuffer = AudioUtilities.EncodeWAV(waveformData);
+        var wavBlob = new Blob(new ArrayBuffer[] { wavArrayBuffer }, new BlobOptions { Type = "audio/wav" });
+        return wavBlob;
+    }
+    async Task Init()
+    {
+        if (BeenInit) return;
+        BeenInit = true;
+        StateHasChanged();
+        using var OnProgress = new ActionCallback<ModelLoadProgress>(Pipeline_OnProgress);
+        await Transformers.Init();
+        var tokenizerTask = AutoTokenizer.FromPretrained(modelId, new FromPretrainedOptions
+            {
+                OnProgress = OnProgress,
+            });
+        var modelTask = SpeechT5ForTextToSpeech.FromPretrained(modelId, new FromPretrainedOptions
+            {
+                Dtype = "fp32",
+                OnProgress = OnProgress,
+            });
+        var vocoderTask = SpeechT5HifiGan.FromPretrained(vocoderId, new FromPretrainedOptions
+            {
+                Dtype = "fp32",
+                OnProgress = OnProgress,
+            });
+
+        using var response = await JS.Fetch(embeddingsBasePath);
+        using var arrayBuffer = await response.ArrayBuffer();
+        using var speakerEmbeddingsData = new Float32Array(arrayBuffer);
+        speakerEmbeddings = new Tensor<Float32Array>("float32", speakerEmbeddingsData, [1, (int)speakerEmbeddingsData.Length]);
+        // await other tasks
+        tokenizerInstance = await tokenizerTask;
+        modelInstance = await modelTask;
+        vocoderInstance = await vocoderTask;
+        ModelProgresses.Clear();
+        ready = true;
+        StateHasChanged();
+    }
+    public Dictionary<string, ModelLoadProgress> ModelProgresses { get; } = new();
+    void Pipeline_OnProgress(ModelLoadProgress obj)
+    {
+        if (!string.IsNullOrEmpty(obj.File))
+        {
+            if (ModelProgresses.TryGetValue(obj.File, out var progress))
+            {
+                progress.Status = obj.Status;
+                if (obj.Progress != null) progress.Progress = obj.Progress;
+                if (obj.Total != null) progress.Total = obj.Total;
+                if (obj.Loaded != null) progress.Loaded = obj.Loaded;
+            }
+            else
+            {
+                ModelProgresses[obj.File] = obj;
+            }
+        }
+        StateHasChanged();
+    }
+    void SetAudioSource(string source, string mimeType = "audio/wav")
+    {
+        using var aSource = new HTMLSourceElement(audioSourceRef);
+        aSource.Src = source;
+        aSource.Type = mimeType;
+        using var aPlayer = new HTMLAudioElement(audioPlayerRef);
+        aPlayer.Load();
+    }
+    public void Dispose()
+    {
+        tokenizerInstance?.Dispose();
+        modelInstance?.Dispose();
+        vocoderInstance?.Dispose();
+        if (!string.IsNullOrEmpty(output))
+        {
+            URL.RevokeObjectURL(output);
+        }
+    }
+}
