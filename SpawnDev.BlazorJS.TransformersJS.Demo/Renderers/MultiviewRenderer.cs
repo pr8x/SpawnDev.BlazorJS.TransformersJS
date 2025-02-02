@@ -182,10 +182,10 @@ namespace SpawnDev.BlazorJS.TransformersJS.Demo.Renderers
             if (string.IsNullOrEmpty(inFormat)) inFormat = "2d";
             if (Source == image.Src && InFormat == inFormat) return;
             Source = image.Src;
-            if (FrameWidth != image.Width || FrameHeight != image.Height)
+            if (FrameWidth != image.NaturalWidth || FrameHeight != image.NaturalHeight)
             {
-                FrameWidth = image.Width;
-                FrameHeight = image.Height;
+                FrameWidth = image.NaturalWidth;
+                FrameHeight = image.NaturalHeight;
                 // input size changed
             }
             InFormat = inFormat;
@@ -197,10 +197,10 @@ namespace SpawnDev.BlazorJS.TransformersJS.Demo.Renderers
         }
         public void SetOverlay(HTMLImageElement image)
         {
-            if (OverlayWidth != image.Width || OverlayHeight != image.Height)
+            if (OverlayWidth != image.NaturalWidth || OverlayHeight != image.NaturalHeight)
             {
-                OverlayWidth = image.Width;
-                OverlayHeight = image.Height;
+                OverlayWidth = image.NaturalWidth;
+                OverlayHeight = image.NaturalHeight;
                 // overlay size changed
             }
             overlayTexture ??= CreateImageTexture();

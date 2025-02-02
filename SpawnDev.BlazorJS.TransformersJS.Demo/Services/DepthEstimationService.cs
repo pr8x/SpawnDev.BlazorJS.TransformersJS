@@ -131,7 +131,8 @@ namespace SpawnDev.BlazorJS.TransformersJS.Demo.Services
                 // get the depth estimation pipeline
                 var DepthEstimationPipeline = await GetDepthEstimationPipeline(model, useWebGPU);
                 // generate the depth map
-                using var depthResult = await DepthEstimationPipeline!.Call(source);
+                using var rawImage = RawImage.FromImage(image);
+                using var depthResult = await DepthEstimationPipeline!.Call(rawImage);
                 using var depthInfo = depthResult.Depth;
                 using var depthMapData = depthInfo.Data;
                 var depthWidth = depthInfo.Width;

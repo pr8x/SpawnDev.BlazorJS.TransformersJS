@@ -63,16 +63,19 @@ namespace SpawnDev.BlazorJS.TransformersJS.Demo.Pages
         }
         void Pipeline_OnProgress(ModelLoadProgress obj)
         {
-            if (ModelProgresses.TryGetValue(obj.File, out var progress))
+            if (obj.File != null)
             {
-                progress.Status = obj.Status;
-                if (obj.Progress != null) progress.Progress = obj.Progress;
-                if (obj.Total != null) progress.Total = obj.Total;
-                if (obj.Loaded != null) progress.Loaded = obj.Loaded;
-            }
-            else
-            {
-                ModelProgresses[obj.File] = obj;
+                if (ModelProgresses.TryGetValue(obj.File, out var progress))
+                {
+                    progress.Status = obj.Status;
+                    if (obj.Progress != null) progress.Progress = obj.Progress;
+                    if (obj.Total != null) progress.Total = obj.Total;
+                    if (obj.Loaded != null) progress.Loaded = obj.Loaded;
+                }
+                else
+                {
+                    ModelProgresses[obj.File] = obj;
+                }
             }
             StateHasChanged();
         }
@@ -176,6 +179,12 @@ namespace SpawnDev.BlazorJS.TransformersJS.Demo.Pages
             }
             StateHasChanged();
         }
+        enum PassArgType
+        {
+            UrlString,
+            RawImage,
+        }
+        PassArgType passArgType = PassArgType.UrlString;
         async Task ProcessSelectedFile()
         {
             if (!string.IsNullOrEmpty(resultObjectUrl))
@@ -190,7 +199,25 @@ namespace SpawnDev.BlazorJS.TransformersJS.Demo.Pages
             }
             StateHasChanged();
             var rgbImage = await HTMLImageElement.CreateFromImageAsync(fileObjectUrl);
-            using var depthResult = await DepthEstimationPipeline!.Call(fileObjectUrl);
+
+            DepthEstimationResult? depthResult = null;
+            switch (passArgType)
+            {
+                case PassArgType.RawImage:
+                    {
+                        using var rawImage = RawImage.FromImage(rgbImage);
+                        JS.Log("rawImage", rawImage);
+                        depthResult = await DepthEstimationPipeline!.Call(rawImage);
+                    }
+                    break;
+                case PassArgType.UrlString:
+                default:
+                    {
+                        depthResult = await DepthEstimationPipeline!.Call(fileObjectUrl);
+                    }
+                    break;
+            }
+
             using var depthInfo = depthResult.Depth;
             using var depthMapData = depthInfo.Data;
             var rgbWidth = depthInfo.Width;
@@ -273,69 +300,6 @@ namespace SpawnDev.BlazorJS.TransformersJS.Demo.Pages
                 resultObjectUrl = null;
             }
             beenInit = false;
-        }
-        async Task<(int width, int height, Uint8ClampedArray data)> LoadImage(File file)
-        {
-            // get RGB data from image file
-            var imageDataUrl = await FileReader.ReadAsDataURLAsync(file);
-            using var image = await HTMLImageElement.CreateFromImageAsync(imageDataUrl!);
-            using var canvas = new HTMLCanvasElement();
-            using var ctx = canvas.Get2DContext();
-            var width = image.Width;
-            var height = image.Height;
-            canvas.Width = width;
-            canvas.Height = height;
-            ctx.DrawImage(image, 0, 0);
-            var imageData = ctx.GetImageData(0, 0, width, height);
-            var data = imageData.Data;
-            return (width, height, data);
-        }
-        async Task<(int width, int height, byte[] data)> LoadImageBytes(File file)
-        {
-            var ret = await LoadImage(file);
-            var width = ret.width;
-            var height = ret.height;
-            using var uint8ClampedArray = ret.data;
-            var data = uint8ClampedArray.ReadBytes();
-            return (width, height, data);
-        }
-        public static float[][,] ToRGB(byte[] data, int width, int height, bool alpha = false, int stride = 0)
-        {
-            stride = stride == 0 ? width : stride;
-            float[,] r = new float[height, width];
-            float[,] g = new float[height, width];
-            float[,] b = new float[height, width];
-            if (alpha)
-            {
-                float[,] a = new float[height, width];
-                //Parallel.For(0, height, delegate (int y)
-                for (int y = 0; y < height; y++)
-                {
-                    int num3 = y * stride;
-                    for (int x = 0; x < width; x++)
-                    {
-                        int num4 = num3 + x * 4;
-                        r[y, x] = (float)(int)data[num4] / 255f;
-                        g[y, x] = (float)(int)data[num4 + 1] / 255f;
-                        b[y, x] = (float)(int)data[num4 + 2] / 255f;
-                        a[y, x] = (float)(int)data[num4 + 3] / 255f;
-                    }
-                };
-                return new float[4][,] { r, g, b, a };
-            }
-            //Parallel.For(0, height, delegate (int y)
-            for (int y = 0; y < height; y++)
-            {
-                int num = y * stride;
-                for (int x = 0; x < width; x++)
-                {
-                    int num2 = num + x * 4;
-                    r[y, x] = (float)(int)data[num2] / 255f;
-                    g[y, x] = (float)(int)data[num2 + 1] / 255f;
-                    b[y, x] = (float)(int)data[num2 + 2] / 255f;
-                }
-            };
-            return new float[3][,] { r, g, b };
         }
     }
 }

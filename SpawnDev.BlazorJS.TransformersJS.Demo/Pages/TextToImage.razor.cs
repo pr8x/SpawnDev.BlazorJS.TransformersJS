@@ -176,8 +176,8 @@ namespace SpawnDev.BlazorJS.TransformersJS.Demo.Pages
             using var image = await HTMLImageElement.CreateFromImageAsync(imageDataUrl!);
             using var canvas = new HTMLCanvasElement();
             using var ctx = canvas.Get2DContext();
-            var width = image.Width;
-            var height = image.Height;
+            var width = image.NaturalWidth;
+            var height = image.NaturalHeight;
             canvas.Width = width;
             canvas.Height = height;
             ctx.DrawImage(image, 0, 0);

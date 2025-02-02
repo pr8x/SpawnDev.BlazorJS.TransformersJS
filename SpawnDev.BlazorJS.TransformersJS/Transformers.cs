@@ -80,5 +80,9 @@ namespace SpawnDev.BlazorJS.TransformersJS
         //    => pipelineOptions == null ? JS.CallAsync<TPipeline>($"{GlobalModuleName}.pipeline", task, model) : JS.CallAsync<TPipeline>($"{GlobalModuleName}.pipeline", task, model, pipelineOptions);
 
         public Task<DepthEstimationPipeline> DepthEstimationPipeline(string? model = null, PipelineOptions? pipelineOptions = null) => Pipeline<DepthEstimationPipeline>("depth-estimation", model, pipelineOptions);
+        /// <summary>
+        /// Returns the version of the transformers.js library
+        /// </summary>
+        public static string? Version => JS.Get<string>($"{GlobalModuleName}.env.version");
     }
 }
