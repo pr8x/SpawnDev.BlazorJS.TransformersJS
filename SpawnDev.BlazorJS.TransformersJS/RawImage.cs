@@ -9,39 +9,10 @@ namespace SpawnDev.BlazorJS.TransformersJS
     /// </summary>
     public class RawImage : JSObject
     {
-        /// <summary>
-        /// Deserialization constructor
-        /// </summary>
-        /// <param name="_ref"></param>
-        public RawImage(IJSInProcessObjectReference _ref) : base(_ref) { }
-        /// <summary>
-        /// Create a new instance of RawImage
-        /// </summary>
-        /// <param name="data">The pixel data.</param>
-        /// <param name="width">The width of the image.</param>
-        /// <param name="height">The height of the image.</param>
-        /// <param name="channels">The number of channels.</param>
-        public RawImage(Uint8Array data, int width, int height, int channels) : base(JS.New(nameof(RawImage), data, width, height, channels)) { }
-        /// <summary>
-        /// Create a new instance of RawImage
-        /// </summary>
-        /// <param name="data">The pixel data.</param>
-        /// <param name="width">The width of the image.</param>
-        /// <param name="height">The height of the image.</param>
-        /// <param name="channels">The number of channels.</param>
-        public RawImage(Uint8ClampedArray data, int width, int height, int channels) : base(JS.New(nameof(RawImage), data, width, height, channels)) { }
-        /// <summary>
-        /// Create a new instance of RawImage
-        /// </summary>
-        /// <param name="data">The pixel data.</param>
-        /// <param name="width">The width of the image.</param>
-        /// <param name="height">The height of the image.</param>
-        /// <param name="channels">The number of channels.</param>
-        public RawImage(byte[] data, int width, int height, int channels) : base(JS.New(nameof(RawImage), data, width, height, channels)) { }
-
-        public (int width, int height) Size => JSRef!.Get<(int width, int height)>("size");
-
+        #region static properties
         public static int Length => JS.Get<int>("Transformers.RawImage.length");
+        #endregion
+        #region static methods
         /// <summary>
         /// Create a RawImage from a URL
         /// </summary>
@@ -80,10 +51,51 @@ namespace SpawnDev.BlazorJS.TransformersJS
             var rawImage = RawImage.FromCanvas(canvas);
             return rawImage;
         }
-
+        /// <summary>
+        /// Create a RawImage from a URL
+        /// </summary>
+        /// <param name="url"></param>
+        /// <returns></returns>
         public static Task<RawImage> Read(string url) => JS.CallAsync<RawImage>("Transformers.RawImage.read", url);
+        /// <summary>
+        /// Create a RawImage from another RawImage
+        /// </summary>
+        /// <param name="rawImage"></param>
+        /// <returns></returns>
         public static Task<RawImage> Read(RawImage rawImage) => JS.CallAsync<RawImage>("Transformers.RawImage.read", rawImage);
+        #endregion
 
+        /// <summary>
+        /// Deserialization constructor
+        /// </summary>
+        /// <param name="_ref"></param>
+        public RawImage(IJSInProcessObjectReference _ref) : base(_ref) { }
+        /// <summary>
+        /// Create a new instance of RawImage
+        /// </summary>
+        /// <param name="data">The pixel data.</param>
+        /// <param name="width">The width of the image.</param>
+        /// <param name="height">The height of the image.</param>
+        /// <param name="channels">The number of channels.</param>
+        public RawImage(Uint8Array data, int width, int height, int channels) : base(JS.New(nameof(RawImage), data, width, height, channels)) { }
+        /// <summary>
+        /// Create a new instance of RawImage
+        /// </summary>
+        /// <param name="data">The pixel data.</param>
+        /// <param name="width">The width of the image.</param>
+        /// <param name="height">The height of the image.</param>
+        /// <param name="channels">The number of channels.</param>
+        public RawImage(Uint8ClampedArray data, int width, int height, int channels) : base(JS.New(nameof(RawImage), data, width, height, channels)) { }
+        /// <summary>
+        /// Create a new instance of RawImage
+        /// </summary>
+        /// <param name="data">The pixel data.</param>
+        /// <param name="width">The width of the image.</param>
+        /// <param name="height">The height of the image.</param>
+        /// <param name="channels">The number of channels.</param>
+        public RawImage(byte[] data, int width, int height, int channels) : base(JS.New(nameof(RawImage), data, width, height, channels)) { }
+
+        public (int width, int height) Size => JSRef!.Get<(int width, int height)>("size");
         public Tensor ToTensor() => JSRef!.Call<Tensor>("toTensor");
     }
 }
