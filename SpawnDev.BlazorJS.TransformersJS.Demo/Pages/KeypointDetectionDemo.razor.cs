@@ -210,7 +210,7 @@ namespace SpawnDev.BlazorJS.TransformersJS.Demo.Pages
             StateHasChanged();
             try
             {
-                Log("Estimating depth... ", false);
+                Log("Running pipeline... ", false);
                 await ProcessSelectedFile();
                 Log("Done");
             }
