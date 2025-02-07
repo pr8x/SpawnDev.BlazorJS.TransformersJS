@@ -138,7 +138,7 @@
         var ext = sourceFileName.Split('.').Last();
         var filenameBase = sourceFileName.Substring(0, sourceFileName.Length - ext.Length - 1);
         if (extension == null) extension = ext;
-        var ret = filenameBase; //$"{filenameBase}.2DZ.{extension}";
+        var ret = filenameBase;
         if (preExtensionTag != null)
         {
             ret += preExtensionTag;
