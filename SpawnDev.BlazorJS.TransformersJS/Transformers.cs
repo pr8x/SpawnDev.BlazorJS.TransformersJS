@@ -2,6 +2,9 @@
 
 namespace SpawnDev.BlazorJS.TransformersJS
 {
+    /// <summary>
+    /// 
+    /// </summary>
     public class Transformers : JSObject
     {
         /// <summary>
@@ -9,20 +12,16 @@ namespace SpawnDev.BlazorJS.TransformersJS
         /// </summary>
         public const string GlobalModuleName = nameof(Transformers);
         /// <summary>
-        /// Used to access the Blazor WebAssembly Javascript Runtime
-        /// </summary>
-        static BlazorJSRuntime JS => BlazorJSRuntime.JS;
-        /// <summary>
         /// Transformers.js bundled with this library<br/>
         /// Downloaded from:<br/>
-        /// https://cdn.jsdelivr.net/npm/@huggingface/transformers@3.3.2
+        /// https://cdn.jsdelivr.net/npm/@huggingface/transformers@3.3.3
         /// </summary>
-        public static string LatestBundledVersionSrc { get; } = $"./_content/SpawnDev.BlazorJS.TransformersJS/transformers-3.3.2.js";
+        public static string LatestBundledVersionSrc { get; } = $"./_content/SpawnDev.BlazorJS.TransformersJS/transformers-3.3.3.js";
         /// <summary>
         /// Transformers.js CDN URL<br/>
         /// https://cdn.jsdelivr.net/npm/@huggingface/transformers<br/>
         /// To get a specific version use the @ tag:<br/>
-        /// https://cdn.jsdelivr.net/npm/@huggingface/transformers@3.3.2 
+        /// https://cdn.jsdelivr.net/npm/@huggingface/transformers@3.3.3 
         /// </summary>
         public static string LatestCDNVersionSrc { get; } = $"https://cdn.jsdelivr.net/npm/@huggingface/transformers";
         /// <summary>
@@ -74,12 +73,27 @@ namespace SpawnDev.BlazorJS.TransformersJS
         //"zero-shot-audio-classification": will return a ZeroShotAudioClassificationPipeline.
         //"zero-shot-image-classification": will return a ZeroShotImageClassificationPipeline.
         //"zero-shot-object-detection": will return a ZeroShotObjectDetectionPipeline.
-        public static Task<TPipeline> Pipeline<TPipeline>(string task, string? model = null, PipelineOptions? pipelineOptions = null) where TPipeline : Pipeline 
-            => pipelineOptions == null ? JS.CallAsync<TPipeline>($"{GlobalModuleName}.pipeline", task, model) : JS.CallAsync<TPipeline>($"{GlobalModuleName}.pipeline", task, model, pipelineOptions);
-        //public static Task<TPipeline> Pipeline2<TPipeline>(string task, string? model = null, PipelineOptions? pipelineOptions = null) 
-        //    => pipelineOptions == null ? JS.CallAsync<TPipeline>($"{GlobalModuleName}.pipeline", task, model) : JS.CallAsync<TPipeline>($"{GlobalModuleName}.pipeline", task, model, pipelineOptions);
 
-        public Task<DepthEstimationPipeline> DepthEstimationPipeline(string? model = null, PipelineOptions? pipelineOptions = null) => Pipeline<DepthEstimationPipeline>("depth-estimation", model, pipelineOptions);
+        /// <summary>
+        /// Creates a new pipeline
+        /// </summary>
+        /// <typeparam name="TPipeline"></typeparam>
+        /// <param name="task"></param>
+        /// <param name="model"></param>
+        /// <param name="pipelineOptions"></param>
+        /// <returns></returns>
+        public Task<TPipeline> Pipeline<TPipeline>(string task, string? model = null, PipelineOptions? pipelineOptions = null) where TPipeline : Pipeline 
+            => pipelineOptions == null ? JS.CallAsync<TPipeline>($"{GlobalModuleName}.pipeline", task, model) : JSRef!.CallAsync<TPipeline>("pipeline", task, model, pipelineOptions);
+
+        /// <summary>
+        /// Create a new depth estimation pipeline
+        /// </summary>
+        /// <param name="model"></param>
+        /// <param name="pipelineOptions"></param>
+        /// <returns></returns>
+        public Task<DepthEstimationPipeline> DepthEstimationPipeline(string? model = null, PipelineOptions? pipelineOptions = null) 
+            => Pipeline<DepthEstimationPipeline>("depth-estimation", model, pipelineOptions);
+
         /// <summary>
         /// Returns the version of the transformers.js library
         /// </summary>
