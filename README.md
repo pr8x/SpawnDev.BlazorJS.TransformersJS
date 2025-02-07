@@ -24,3 +24,6 @@ NOTE: The models used can be large. A fast connection is recommended.
 [Live Demo](https://lostbeard.github.io/SpawnDev.BlazorJS.TransformersJS)  
 [2D to 2D+Z](https://lostbeard.github.io/SpawnDev.BlazorJS.TransformersJS)  
 [2D to Anaglyph](https://lostbeard.github.io/SpawnDev.BlazorJS.TransformersJS/AnaglyphImageDemo)  
+[Text To Speech](https://lostbeard.github.io/SpawnDev.BlazorJS.TransformersJS/TextToSpeechClient)  
+[Keypoint Detection](https://lostbeard.github.io/SpawnDev.BlazorJS.TransformersJS/KeypointDetectionDemo)  
+
