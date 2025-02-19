@@ -1,4 +1,5 @@
 ﻿using Microsoft.JSInterop;
+using SpawnDev.BlazorJS.JSObjects;
 
 namespace SpawnDev.BlazorJS.TransformersJS
 {
@@ -10,6 +11,6 @@ namespace SpawnDev.BlazorJS.TransformersJS
         /// <param name="_ref"></param>
         public AutoModelResult(IJSInProcessObjectReference _ref) : base(_ref) { }
 
-        public TensorProxy<float> Heatmaps => JSRef!.Get<TensorProxy<float>>("heatmaps");
+        public TensorProxy<Float32Array> Heatmaps => JSRef!.Get<TensorProxy<Float32Array>>("heatmaps");
     }
 }
