@@ -165,30 +165,53 @@ namespace SpawnDev.BlazorJS.TransformersJS.Demo.Services
             }
             return imageWithDepth;
         }
-        async Task<string> Create2DZObjectUrl(HTMLImageElement rgbImage, Uint8Array grayscale1BPPUint8Array, int width, int height)
+        public async Task<string> Create2DZObjectUrl(HTMLImageElement rgbImage, Uint8Array grayscale1BPPUint8Array, int width, int height, string? type = null, float? quality = null)
         {
             var outWidth = width * 2;
             var outHeight = height;
             var grayscale1BPPBytes = grayscale1BPPUint8Array.ReadBytes();
             var depthmapRGBABytes = Grayscale1BPPToRGBA(grayscale1BPPBytes, width, height);
-            using var canvas = new HTMLCanvasElement(outWidth, outHeight);
+            using var canvas = new OffscreenCanvas(outWidth, outHeight);
             using var ctx = canvas.Get2DContext();
             // draw rgb image
             ctx.DrawImage(rgbImage);
             // draw depth map
             ctx.PutImageBytes(depthmapRGBABytes, width, height, width, 0);
-            using var blob = await canvas.ToBlobAsync("image/png");
+            using var blob = await canvas.ConvertToBlob(new ConvertToBlobOptions { Type = type, Quality = quality });
             var ret = URL.CreateObjectURL(blob);
             return ret;
         }
-        async Task<string> CreateDepthImageObjectUrl(Uint8Array grayscale1BPPUint8Array, int width, int height)
+        public async Task<Blob> Create2DZBlob(HTMLImageElement rgbImage, Uint8Array grayscale1BPPUint8Array, int width, int height, string? type = null, float? quality = null)
+        {
+            var outWidth = width * 2;
+            var outHeight = height;
+            var grayscale1BPPBytes = grayscale1BPPUint8Array.ReadBytes();
+            var depthmapRGBABytes = Grayscale1BPPToRGBA(grayscale1BPPBytes, width, height);
+            using var canvas = new OffscreenCanvas(outWidth, outHeight);
+            using var ctx = canvas.Get2DContext();
+            // draw rgb image
+            ctx.DrawImage(rgbImage);
+            // draw depth map
+            ctx.PutImageBytes(depthmapRGBABytes, width, height, width, 0);
+            var blob = await canvas.ConvertToBlob(new ConvertToBlobOptions { Type = type, Quality = quality });
+            return blob;
+        }
+        public async Task<Blob> ImageToBlob(HTMLImageElement rgbImage, string? type = null, float? quality = null)
+        {
+            using var canvas = new OffscreenCanvas(rgbImage.Width, rgbImage.Height);
+            using var ctx = canvas.Get2DContext();
+            ctx.DrawImage(rgbImage);
+            var blob = await canvas.ConvertToBlob(new ConvertToBlobOptions { Type = type, Quality = quality });
+            return blob;
+        }
+        async Task<string> CreateDepthImageObjectUrl(Uint8Array grayscale1BPPUint8Array, int width, int height, string? type = null, float? quality = null)
         {
             var grayscale1BPPBytes = grayscale1BPPUint8Array.ReadBytes();
             var depthmapRGBABytes = Grayscale1BPPToRGBA(grayscale1BPPBytes, width, height);
-            using var canvas = new HTMLCanvasElement(width, height);
+            using var canvas = new OffscreenCanvas(width, height);
             using var ctx = canvas.Get2DContext();
             ctx.PutImageBytes(depthmapRGBABytes, width, height);
-            using var blob = await canvas.ToBlobAsync("image/png");
+            using var blob = await canvas.ConvertToBlob(new ConvertToBlobOptions { Type = type, Quality = quality });
             var ret = URL.CreateObjectURL(blob);
             return ret;
         }

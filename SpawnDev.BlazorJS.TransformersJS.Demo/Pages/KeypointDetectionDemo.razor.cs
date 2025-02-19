@@ -146,6 +146,7 @@ namespace SpawnDev.BlazorJS.TransformersJS.Demo.Pages
                 URL.RevokeObjectURL(resultObjectUrl);
                 resultObjectUrl = null;
             }
+            if (fileObjectUrl == null) return;
             StateHasChanged();
             var rgbImage = await HTMLImageElement.CreateFromImageAsync(fileObjectUrl);
 
@@ -155,11 +156,17 @@ namespace SpawnDev.BlazorJS.TransformersJS.Demo.Pages
             // prepare inputs with the auto image processor
             var inputs = await autoImageProcessor!.Call(rawImage);
 
+            JS.Log("_inputs", inputs);
+            JS.Set("_inputs", inputs);
+
             // predict heatmaps
             var autoModelResult = await autoModel!.Call(inputs);
 
             // get heatmaps
             using var heatmaps = autoModelResult.Heatmaps;
+
+            JS.Log("_heatmaps", heatmaps);
+            JS.Set("_heatmaps", heatmaps);
 
             // post-process heatmaps to get keypoints and scores
             var boxes = new (int, int, int, int)[][] { new[] { (0, 0, rgbImage.Width, rgbImage.Height) } };

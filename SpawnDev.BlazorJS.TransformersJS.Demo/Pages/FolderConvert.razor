@@ -1,0 +1,142 @@
+﻿@page "/FolderConvert"
+@using SpawnDev.BlazorJS.JSObjects
+@using SpawnDev.BlazorJS.TransformersJS.Demo.Services
+@using SpawnDev.BlazorJS.Toolbox
+
+<div class="container">
+    <h3>Folder Convert</h3>
+    <p>
+        This demo the conversion of an entire folder from 2D images to 2D+Z images.<br />
+        Only works on browsers that support <a href="https://caniuse.com/?search=showDirectoryPicker">showDirectoryPicker</a>
+    </p>
+    <div>
+        Folder: @DirDisplayName
+    </div>
+    <div style="padding: 4px;">
+        <button style="margin: 2px;" @onclick="OpenFolder">Open Folder</button><br />
+        <button style="margin: 2px;" @onclick="Start" disabled="@(directoryHandle == null)">Start</button><br />
+        <button style="margin: 2px;" @onclick="Stop" disabled="@(directoryHandle == null)">Stop</button><br />
+    </div>
+</div>
+
+@code {
+    [Inject]
+    BlazorJSRuntime JS { get; set; } = default!;
+
+    [Inject]
+    DepthEstimationService DepthEstimationService { get; set; } = default!;
+
+    FileSystemDirectoryHandle? directoryHandle = null;
+    string DirDisplayName => directoryHandle?.Name ?? "[ None ]";
+
+    async Task OpenFolder()
+    {
+        using var window = JS.GetWindow();
+        if (window!.JSRef!.IsUndefined("showDirectoryPicker"))
+        {
+            window.Alert("Your browser does not support working with directories. A Chromium based browser is recommended.");
+            return;
+        }
+        FileSystemDirectoryHandle? dir = null;
+        try
+        {
+            dir = await window.ShowDirectoryPicker(new ShowDirectoryPickerOptions { Mode = "readwrite", Id = "2dz", StartIn = "videos" });
+        }
+        catch (Exception ex)
+        {
+            var nmt = true;
+        }
+        await OpenFolder(dir);
+    }
+    string OutputFileType = ".png";
+    string OutputMimeType = "image/png";
+    float? OutputQuality = null;
+    async Task Start()
+    {
+        if (directoryHandle == null) return;
+        var fsHandles = await directoryHandle.ValuesList();
+        JS.Log("entries", fsHandles);
+
+        // for now the source and target are the same but will not be in the future... so for now assign it here
+        FileSystemDirectoryHandle outputDirectoryHandle = directoryHandle;
+
+        DepthEstimationPipeline? depthEstimationPipeline = null;
+
+        var names = fsHandles.Select(o => o.Name).ToList();
+        foreach (var entry in fsHandles)
+        {
+            var fileName = entry.Name;
+            var fileBaseName = Path.GetFileNameWithoutExtension(entry.Name);
+            var ext = Path.GetExtension(entry.Name);
+            var has2DZTag = fileBaseName.Contains(".2DZ");
+            if (entry is FileSystemFileHandle fileHandle)
+            {
+                var size = await fileHandle.GetSize();
+                if (size == 0) continue;
+                switch(ext?.ToLowerInvariant())
+                {
+                    case ".webp":
+                    case ".bmp":
+                    case ".png":
+                    case ".jpeg":
+                    case ".jpg":
+                        {
+                            // file is an image
+                            if (has2DZTag)
+                            {
+                                // this image is 2DZ. Skip.
+                                continue;
+                            }
+                            // check if it already has a 2D+Z version
+                            var image2DZName = $"{fileBaseName}.2DZ{OutputFileType}";
+                            var image2DExists = await outputDirectoryHandle.FilePathExists(fileName);
+                            var image2DZExists = await outputDirectoryHandle.FilePathExists(image2DZName);
+                            if (image2DZExists)
+                            {
+                                // this image already has a converted image. Skip.
+                                continue;
+                            }
+                            // convert
+                            using var file = await fileHandle.GetFile();
+                            var objectUrl = URL.CreateObjectURL(file);
+                            using var image = await HTMLImageElement.CreateFromImageAsync(objectUrl);
+                            URL.RevokeObjectURL(objectUrl);
+                            depthEstimationPipeline ??= await DepthEstimationService.GetDepthEstimationPipeline();
+                            // convert HTMLImageElement into RawImage for use with Tensor
+                            using var rawImage = RawImage.FromImage(image);
+                            // generate the depth map
+                            using var depthResult = await depthEstimationPipeline!.Call(rawImage);
+                            using var depthInfo = depthResult.Depth;
+                            using var depthMapData = depthInfo.Data;
+                            var depthWidth = depthInfo.Width;
+                            var depthHeight = depthInfo.Height;
+                            // marge 2D and Z into 2D+Z image Blob
+                            using var image2DZBlob = await DepthEstimationService.Create2DZBlob(image, depthMapData, depthWidth, depthHeight, OutputMimeType, OutputQuality);
+                            // write image to file image2DZName
+                            using var outFileHandle = await outputDirectoryHandle.GetFileHandle(image2DZName, true);
+                            await outFileHandle.Write(image2DZBlob);
+                            JS.Log("processed:", image2DZName);
+                            // next ...
+                        }
+                        break;
+                }
+
+            }
+        }
+
+        var w = JS.GetWindow();
+        JS.Log("_w", new Dictionary<string, Window> { { "somewindow", w } });
+
+    }
+    async Task Stop()
+    {
+
+    }
+    async Task OpenFolder(FileSystemDirectoryHandle? dir)
+    {
+        directoryHandle?.Dispose();
+        directoryHandle = dir;
+        StateHasChanged();
+
+    }
+}
