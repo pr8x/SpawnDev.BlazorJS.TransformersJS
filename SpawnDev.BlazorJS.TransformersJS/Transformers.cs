@@ -14,14 +14,14 @@ namespace SpawnDev.BlazorJS.TransformersJS
         /// <summary>
         /// Transformers.js bundled with this library<br/>
         /// Downloaded from:<br/>
-        /// https://cdn.jsdelivr.net/npm/@huggingface/transformers@3.4.2
+        /// https://cdn.jsdelivr.net/npm/@huggingface/transformers@3.5.0
         /// </summary>
-        public static string LatestBundledVersionSrc { get; } = $"./_content/SpawnDev.BlazorJS.TransformersJS/transformers-3.4.2.js";
+        public static string LatestBundledVersionSrc { get; } = $"./_content/SpawnDev.BlazorJS.TransformersJS/transformers-3.5.0.js";
         /// <summary>
         /// Transformers.js CDN URL<br/>
         /// https://cdn.jsdelivr.net/npm/@huggingface/transformers<br/>
         /// To get a specific version use the @ tag:<br/>
-        /// https://cdn.jsdelivr.net/npm/@huggingface/transformers@3.4.2
+        /// https://cdn.jsdelivr.net/npm/@huggingface/transformers@3.5.0
         /// </summary>
         public static string LatestCDNVersionSrc { get; } = $"https://cdn.jsdelivr.net/npm/@huggingface/transformers";
         /// <summary>
@@ -42,13 +42,13 @@ namespace SpawnDev.BlazorJS.TransformersJS
         public static async Task<Transformers> Init(string? srcUrl = null)
         {
             srcUrl = srcUrl ?? LatestBundledVersionSrc;
-            var pipelines = JS.Get<Transformers>(GlobalModuleName);
-            if (pipelines != null) return pipelines;
-            pipelines = await JS.Import<Transformers>(LatestBundledVersionSrc);
-            if (pipelines == null) throw new Exception("WebTorrentService could not be initialized.");
+            var transformers = JS.Get<Transformers>(GlobalModuleName);
+            if (transformers != null) return transformers;
+            transformers = await JS.Import<Transformers>(LatestBundledVersionSrc);
+            if (transformers == null) throw new Exception("WebTorrentService could not be initialized.");
             // set transformers.js module to a global variable
-            JS.Set(GlobalModuleName, pipelines);
-            return pipelines;
+            JS.Set(GlobalModuleName, transformers);
+            return transformers;
         }
         //The task defining which pipeline will be returned.Currently accepted tasks are:
         //"audio-classification": will return a AudioClassificationPipeline.
