@@ -1,13 +1,8 @@
 ﻿# SpawnDev.BlazorJS.TransformersJS
 [![NuGet](https://img.shields.io/nuget/dt/SpawnDev.BlazorJS.TransformersJS.svg?label=SpawnDev.BlazorJS.TransformersJS)](https://www.nuget.org/packages/SpawnDev.BlazorJS.TransformersJS) 
 
-`SpawnDev.BlazorJS.TrasnformersJS` brings the awesome [Hugging Face Transformers.js](https://github.com/huggingface/transformers.js/) library to Blazor WebAssembly.
-
-#### WIP
-This project is a "Work In Progress" and is currently limited. If you are interested in this project, please start an issue to suggest features or areas of interest.
-
 ## State-of-the-art Machine Learning for the Web in Blazor WebAssembly
-SpawnDev.BlazorJS.TransformersJS brings the awesome Transformers.js library into Blazor WebAssembly apps.
+`SpawnDev.BlazorJS.TrasnformersJS` brings the awesome [Transformers.js](https://github.com/huggingface/transformers.js/) library from [Hugging Face]() to Blazor WebAssembly.
 
 Transformers.js is designed to be functionally equivalent to Hugging Face’s transformers python library, meaning you can run the same pretrained models using a very similar API. These models support common tasks in different modalities, such as:
 
@@ -29,3 +24,5 @@ NOTE: The models used can be large. A fast connection is recommended.
 [Text To Speech](https://lostbeard.github.io/SpawnDev.BlazorJS.TransformersJS/TextToSpeechClient)  
 [Keypoint Detection](https://lostbeard.github.io/SpawnDev.BlazorJS.TransformersJS/KeypointDetectionDemo)  
 
+#### WIP
+This project is a "Work In Progress" and is currently limited. If you are interested in this project, please start an issue to suggest features or areas of interest.
