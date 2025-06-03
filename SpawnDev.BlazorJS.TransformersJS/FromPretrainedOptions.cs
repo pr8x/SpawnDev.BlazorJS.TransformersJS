@@ -6,7 +6,7 @@ namespace SpawnDev.BlazorJS.TransformersJS
     {
         [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
         [JsonPropertyName("device")]
-        public FromPretrainedSubOptions? Device { get; set; }
+        public Union<FromPretrainedSubOptions, string>? Device { get; set; }
 
         [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
         [JsonPropertyName("dtype")]
