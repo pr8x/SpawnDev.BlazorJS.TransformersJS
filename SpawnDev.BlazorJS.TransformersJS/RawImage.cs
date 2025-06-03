@@ -32,6 +32,12 @@ namespace SpawnDev.BlazorJS.TransformersJS
         /// <returns></returns>
         public static RawImage FromCanvas(HTMLCanvasElement canvas) => JS.Call<RawImage>("Transformers.RawImage.fromCanvas", canvas);
         /// <summary>
+        /// Create a RawImage from a Canvas
+        /// </summary>
+        /// <param name="canvas"></param>
+        /// <returns></returns>
+        public static RawImage FromCanvas(OffscreenCanvas canvas) => JS.Call<RawImage>("Transformers.RawImage.fromCanvas", canvas);
+        /// <summary>
         /// Create a RawImage from a Tensor
         /// </summary>
         /// <param name="tensor"></param>
@@ -44,7 +50,7 @@ namespace SpawnDev.BlazorJS.TransformersJS
         /// <returns></returns>
         public static RawImage FromImage(HTMLImageElement image)
         {
-            using var canvas = new HTMLCanvasElement(image.NaturalWidth, image.NaturalHeight);
+            using var canvas = new OffscreenCanvas(image.NaturalWidth, image.NaturalHeight);
             using var ctx = canvas.Get2DContext();
             ctx.DrawImage(image);
             // Use RawImage.fromCanvas() to create a RawImage 
@@ -77,7 +83,7 @@ namespace SpawnDev.BlazorJS.TransformersJS
         /// <param name="width">The width of the image.</param>
         /// <param name="height">The height of the image.</param>
         /// <param name="channels">The number of channels.</param>
-        public RawImage(Uint8Array data, int width, int height, int channels) : base(JS.New(nameof(RawImage), data, width, height, channels)) { }
+        public RawImage(Uint8Array data, int width, int height, int channels) : base(JS.New("Transformers.RawImage", data, width, height, channels)) { }
         /// <summary>
         /// Create a new instance of RawImage
         /// </summary>
@@ -85,7 +91,7 @@ namespace SpawnDev.BlazorJS.TransformersJS
         /// <param name="width">The width of the image.</param>
         /// <param name="height">The height of the image.</param>
         /// <param name="channels">The number of channels.</param>
-        public RawImage(Uint8ClampedArray data, int width, int height, int channels) : base(JS.New(nameof(RawImage), data, width, height, channels)) { }
+        public RawImage(Uint8ClampedArray data, int width, int height, int channels) : base(JS.New("Transformers.RawImage", data, width, height, channels)) { }
         /// <summary>
         /// Create a new instance of RawImage
         /// </summary>
@@ -93,7 +99,7 @@ namespace SpawnDev.BlazorJS.TransformersJS
         /// <param name="width">The width of the image.</param>
         /// <param name="height">The height of the image.</param>
         /// <param name="channels">The number of channels.</param>
-        public RawImage(byte[] data, int width, int height, int channels) : base(JS.New(nameof(RawImage), data, width, height, channels)) { }
+        public RawImage(byte[] data, int width, int height, int channels) : base(JS.New("Transformers.RawImage", data, width, height, channels)) { }
 
         public (int width, int height) Size => JSRef!.Get<(int width, int height)>("size");
         public Tensor ToTensor() => JSRef!.Call<Tensor>("toTensor");
