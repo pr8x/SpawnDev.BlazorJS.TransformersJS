@@ -62,6 +62,7 @@ namespace SpawnDev.BlazorJS.TransformersJS.Demo.Services
         {
             OnStateChange?.Invoke();
         }
+
         void Pipeline_OnProgress(ModelLoadProgress obj)
         {
             if (!string.IsNullOrEmpty(obj.File))
@@ -80,6 +81,27 @@ namespace SpawnDev.BlazorJS.TransformersJS.Demo.Services
             }
             StateHasChanged();
         }
+        bool? hasFp16 = null;
+        public async Task<bool> HasFp16()
+        {
+            if (hasFp16 == null)
+            {
+                try
+                {
+                    using var navigator = JS.Get<Navigator>("navigator");
+                    using var gpu = navigator.Gpu;
+                    if (gpu != null)
+                    {
+                        using var adapter = await gpu.RequestAdapter();
+                        using var features = adapter.Features;
+                        hasFp16 = features.Has("shader-f16");
+                    }
+                }
+                catch { }
+            }
+            if (hasFp16 == null) hasFp16 = false;
+            return hasFp16.Value;
+        }
         SemaphoreSlim LoadLimiter = new SemaphoreSlim(1);
         public async Task<DepthEstimationPipeline> GetDepthEstimationPipeline(string? model = null, bool useWebGPU = true)
         {
@@ -97,6 +119,7 @@ namespace SpawnDev.BlazorJS.TransformersJS.Demo.Services
                 return depthEstimationPipeline;
             }
             await LoadLimiter.WaitAsync();
+            var supportsFp16 = await HasFp16();
             using var OnProgress = new ActionCallback<ModelLoadProgress>(Pipeline_OnProgress);
             try
             {
@@ -110,7 +133,7 @@ namespace SpawnDev.BlazorJS.TransformersJS.Demo.Services
                 {
                     Device = useWebGPU ? "webgpu" : null,
                     OnProgress = OnProgress,
-                    //Dtype = "q4",
+                    Dtype = supportsFp16 ? "fp16" : "fp32",
                 });
                 DepthEstimationPipelines[key] = depthEstimationPipeline;
                 return depthEstimationPipeline;

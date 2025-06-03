@@ -79,7 +79,7 @@ namespace SpawnDev.BlazorJS.TransformersJS.Demo.Pages
             }
             StateHasChanged();
         }
-        ActionCallback<ModelLoadProgress> OnProgress => new ActionCallback<ModelLoadProgress>(Pipeline_OnProgress);
+        ActionCallback<ModelLoadProgress>? OnProgress = null;
         string SelectedModel = Models.First();
         bool UseWebGPU = true;
         static List<string> Models = new List<string>
@@ -105,6 +105,7 @@ namespace SpawnDev.BlazorJS.TransformersJS.Demo.Pages
                 Transformers = await Transformers.Init();
                 Log($"Done");
             }
+            OnProgress ??= new ActionCallback<ModelLoadProgress>(Pipeline_OnProgress);
             if (!DepthEstimationPipelines.TryGetValue(key, out var pipeline))
             {
                 try
