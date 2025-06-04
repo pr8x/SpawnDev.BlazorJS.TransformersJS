@@ -24,7 +24,8 @@ NOTE: The models used can be large. A fast connection is recommended.
 [Text To Speech](https://lostbeard.github.io/SpawnDev.BlazorJS.TransformersJS/TextToSpeechClient)  
 [Keypoint Detection](https://lostbeard.github.io/SpawnDev.BlazorJS.TransformersJS/KeypointDetectionDemo)  
 [Realtime 2D to 2DZ](https://lostbeard.github.io/SpawnDev.BlazorJS.TransformersJS/RealTime2DZ)  
-[Realtime 2D to 3D](https://lostbeard.github.io/SpawnDev.BlazorJS.TransformersJS/RealTime2Dto3D)
+[Webcam 2D to 3D](https://lostbeard.github.io/SpawnDev.BlazorJS.TransformersJS/RealTime2Dto3D)
+[Video 2D to 3D](https://lostbeard.github.io/SpawnDev.BlazorJS.TransformersJS/RealTimeVideo2Dto3D)
 
 #### WIP
 This project is a "Work In Progress" and is currently limited. If you are interested in this project, please start an issue to suggest features or areas of interest.
