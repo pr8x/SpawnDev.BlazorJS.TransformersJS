@@ -1,6 +1,4 @@
 ﻿using SpawnDev.BlazorJS.JSObjects;
-using System.Text.Json.Serialization;
-using static System.Net.Mime.MediaTypeNames;
 
 namespace SpawnDev.BlazorJS.TransformersJS.Demo.Renderers
 {
@@ -29,7 +27,7 @@ namespace SpawnDev.BlazorJS.TransformersJS.Demo.Renderers
             {
                 PreserveDrawingBuffer = true,
             });
-            // classes that implement this class will create he shader program
+            // classes that implement this class will create the shader program
         }
         public void Dispose()
         {
@@ -40,7 +38,7 @@ namespace SpawnDev.BlazorJS.TransformersJS.Demo.Renderers
 
         }
         WebGLBuffer? positionBuffer = null;
-        WebGLBuffer? texcoordBuffer = null;
+        WebGLBuffer? texCoordBuffer = null;
         int positionLocation = 0;
         int texcoordLocation = 0;
         void Init(int outWidth, int outHeight)
@@ -54,15 +52,16 @@ namespace SpawnDev.BlazorJS.TransformersJS.Demo.Renderers
 
             // Bind it to ARRAY_BUFFER (think of it as ARRAY_BUFFER = positionBuffer)
             gl.BindBuffer(gl.ARRAY_BUFFER, positionBuffer);
-            // Set a rectangle the same size as the image.
+
+            // Write the 6 points (2 triangles) to the buffer
             WebGLUtilities.SetRectangle(gl, 0, 0, outWidth, outHeight);
 
             // provide texture coordinates for the rectangle.
-            if (texcoordBuffer == null)
+            if (texCoordBuffer == null)
             {
-                texcoordBuffer = gl.CreateBuffer();
-                gl.BindBuffer(gl.ARRAY_BUFFER, texcoordBuffer);
-                using var texCoordBuffer = new Float32Array([
+                texCoordBuffer = gl.CreateBuffer();
+                gl.BindBuffer(gl.ARRAY_BUFFER, texCoordBuffer);
+                using var texCoordBufferData = new Float32Array([
                     0.0f,  0.0f,
                     1.0f,  0.0f,
                     0.0f,  1.0f,
@@ -70,7 +69,8 @@ namespace SpawnDev.BlazorJS.TransformersJS.Demo.Renderers
                     1.0f,  0.0f,
                     1.0f,  1.0f,
                 ]);
-                gl.BufferData(gl.ARRAY_BUFFER, texCoordBuffer, gl.STATIC_DRAW);
+                // Write the normalized texture coordinates to the texCoordBuffer
+                gl.BufferData(gl.ARRAY_BUFFER, texCoordBufferData, gl.STATIC_DRAW);
             }
 
             // input texture
@@ -83,7 +83,7 @@ namespace SpawnDev.BlazorJS.TransformersJS.Demo.Renderers
         {
             if (string.IsNullOrEmpty(type))
             {
-                type = "image/png";
+                type = "canvas/png";
             }
             if (canvas != null)
             {
@@ -195,6 +195,24 @@ namespace SpawnDev.BlazorJS.TransformersJS.Demo.Renderers
             gl.BindTexture(gl.TEXTURE_2D, videoSampler);
             gl.TexImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, image);
         }
+        public void SetInput(OffscreenCanvas canvas, string inFormat)
+        {
+            if (string.IsNullOrEmpty(inFormat)) inFormat = "2d";
+            Source = "";
+            if (FrameWidth != canvas.Width || FrameHeight != canvas.Height)
+            {
+                FrameWidth = canvas.Width;
+                FrameHeight = canvas.Height;
+                // input size changed
+            }
+            InFormat = inFormat;
+            videoSampler ??= CreateImageTexture();
+            // Upload the image into the texture.
+            gl.ActiveTexture(gl.TEXTURE1);
+            gl.BindTexture(gl.TEXTURE_2D, videoSampler);
+            //gl.TexImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, image);
+            gl.JSRef!.CallVoid("texImage2D", gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, canvas);
+        }
         public void SetOverlay(HTMLImageElement image)
         {
             if (OverlayWidth != image.NaturalWidth || OverlayHeight != image.NaturalHeight)
@@ -224,6 +242,8 @@ namespace SpawnDev.BlazorJS.TransformersJS.Demo.Renderers
                     break;
                 case "2d":
                 default:
+                    frameCols = 1;
+                    inputLayout = 1;
                     break;
             }
             var viewWidth = (int)Math.Round((float)FrameWidth / (float)frameCols);
@@ -364,15 +384,13 @@ namespace SpawnDev.BlazorJS.TransformersJS.Demo.Renderers
             gl.ClearColor(0, 0, 0, 0);
             gl.Clear(gl.COLOR_BUFFER_BIT);
 
-            // Tell it to use our program (pair of shaders)
-            gl.UseProgram(program);
-
             {
                 // Turn on the position attribute
                 gl.EnableVertexAttribArray(positionLocation);
 
                 // Bind the position buffer.
                 gl.BindBuffer(gl.ARRAY_BUFFER, positionBuffer);
+
                 // Tell the position attribute how to get data out of positionBuffer (ARRAY_BUFFER)
                 var size = 2;          // 2 components per iteration
                 var type = gl.FLOAT;   // the data is 32bit floats
@@ -383,13 +401,13 @@ namespace SpawnDev.BlazorJS.TransformersJS.Demo.Renderers
             }
 
             {
-                // Turn on the texcoord attribute
+                // Turn on the texCoord attribute
                 gl.EnableVertexAttribArray(texcoordLocation);
 
-                // bind the texcoord buffer.
-                gl.BindBuffer(gl.ARRAY_BUFFER, texcoordBuffer);
+                // bind the texCoord buffer.
+                gl.BindBuffer(gl.ARRAY_BUFFER, texCoordBuffer);
 
-                // Tell the texcoord attribute how to get data out of texcoordBuffer (ARRAY_BUFFER)
+                // Tell the texCoord attribute how to get data out of texCoordBuffer (ARRAY_BUFFER)
                 var size = 2;          // 2 components per iteration
                 var type = gl.FLOAT;   // the data is 32bit floats
                 var normalize = false; // don't normalize the data
@@ -399,7 +417,7 @@ namespace SpawnDev.BlazorJS.TransformersJS.Demo.Renderers
             }
 
             {
-                // Draw the rectangle.
+                // Draw the rectangle (full screen quad)
                 var primitiveType = gl.TRIANGLES;
                 var offset = 0;
                 var count = 6;

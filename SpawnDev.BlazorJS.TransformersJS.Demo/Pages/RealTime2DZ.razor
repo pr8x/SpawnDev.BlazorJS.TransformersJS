@@ -1,4 +1,4 @@
-﻿@page "/"
+﻿@page "/RealTime2DZ"
 @using SpawnDev.BlazorJS
 @using SpawnDev.BlazorJS.JSObjects
 @using System.Diagnostics
@@ -15,7 +15,7 @@
     </div>
     <div id="controls">
         <div title="Process frames at a lower size (lower = faster)">
-            <label>Scale</label>
+            <label>Depth Scale</label>
             (<label>@(Math.Round(scale, 2))</label>)
             <br />
             <input @ref=scaleRef type="range" min="0.1" max="1" step="0.05" value="@scale" />
