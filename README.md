@@ -16,16 +16,16 @@ Transformers.js uses ONNX Runtime to run models in the browser. The best part ab
 ### Demo
 The current demo app uses Transformers.js, Blazor, and WebGL.
 
-NOTE: The models used can be large. A fast connection is recommended.  
+**NOTE: The models used can be large. A fast connection is recommended.**  
 
-[Live Demo](https://lostbeard.github.io/SpawnDev.BlazorJS.TransformersJS)  
-[2D to 2D+Z](https://lostbeard.github.io/SpawnDev.BlazorJS.TransformersJS)  
-[2D to Anaglyph](https://lostbeard.github.io/SpawnDev.BlazorJS.TransformersJS/AnaglyphImageDemo)  
-[Text To Speech](https://lostbeard.github.io/SpawnDev.BlazorJS.TransformersJS/TextToSpeechClient)  
-[Keypoint Detection](https://lostbeard.github.io/SpawnDev.BlazorJS.TransformersJS/KeypointDetectionDemo)  
-[Realtime 2D to 2DZ](https://lostbeard.github.io/SpawnDev.BlazorJS.TransformersJS/RealTime2DZ)  
-[Webcam 2D to 3D](https://lostbeard.github.io/SpawnDev.BlazorJS.TransformersJS/RealTime2Dto3D)
-[Video 2D to 3D](https://lostbeard.github.io/SpawnDev.BlazorJS.TransformersJS/RealTimeVideo2Dto3D)
+- [Live Demo](https://lostbeard.github.io/SpawnDev.BlazorJS.TransformersJS)  
+- [2D to 2D+Z](https://lostbeard.github.io/SpawnDev.BlazorJS.TransformersJS)  
+- [2D to Anaglyph](https://lostbeard.github.io/SpawnDev.BlazorJS.TransformersJS/AnaglyphImageDemo)  
+- [Text To Speech](https://lostbeard.github.io/SpawnDev.BlazorJS.TransformersJS/TextToSpeechClient)  
+- [Keypoint Detection](https://lostbeard.github.io/SpawnDev.BlazorJS.TransformersJS/KeypointDetectionDemo)  
+- [Realtime 2D to 2DZ](https://lostbeard.github.io/SpawnDev.BlazorJS.TransformersJS/RealTime2DZ)  
+- [Webcam 2D to 3D](https://lostbeard.github.io/SpawnDev.BlazorJS.TransformersJS/RealTime2Dto3D)  
+- [Video 2D to 3D](https://lostbeard.github.io/SpawnDev.BlazorJS.TransformersJS/RealTimeVideo2Dto3D)
 
 #### WIP
 This project is a "Work In Progress" and is currently limited. If you are interested in this project, please start an issue to suggest features or areas of interest.
