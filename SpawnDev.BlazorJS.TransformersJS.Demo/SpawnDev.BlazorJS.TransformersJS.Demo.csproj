@@ -8,24 +8,10 @@
 	</PropertyGroup>
 
 	<ItemGroup>
-	  <None Remove="Shaders\anaglyph.fragment.glsl" />
-	  <None Remove="Shaders\basic.fragment.glsl" />
-	  <None Remove="Shaders\basic.vertex.glsl" />
-	  <None Remove="Shaders\multiview.fragment.glsl" />
-	</ItemGroup>
-
-	<ItemGroup>
-	  <EmbeddedResource Include="Shaders\anaglyph.fragment.glsl" />
-	  <EmbeddedResource Include="Shaders\multiview.vertex.glsl" />
-	  <EmbeddedResource Include="Shaders\basic.fragment.glsl" />
-	  <EmbeddedResource Include="Shaders\basic.vertex.glsl" />
-	  <EmbeddedResource Include="Shaders\multiview.fragment.glsl" />
-	</ItemGroup>
-
-	<ItemGroup>
 		<PackageReference Include="Microsoft.AspNetCore.Components.WebAssembly" Version="8.0.16" />
 		<PackageReference Include="Microsoft.AspNetCore.Components.WebAssembly.DevServer" Version="8.0.16" PrivateAssets="all" />
 		<PackageReference Include="SpawnDev.BlazorJS" Version="2.18.0" />
+		<PackageReference Include="SpawnDev.BlazorJS.MultiView" Version="1.0.0" />
 		<PackageReference Include="SpawnDev.BlazorJS.WebWorkers" Version="2.13.0" />
 		<PackageReference Include="Radzen.Blazor" Version="5.7.3" />
 	</ItemGroup>

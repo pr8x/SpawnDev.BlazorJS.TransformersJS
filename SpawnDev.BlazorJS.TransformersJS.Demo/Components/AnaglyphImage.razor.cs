@@ -1,6 +1,6 @@
 ﻿using Microsoft.AspNetCore.Components;
 using SpawnDev.BlazorJS.JSObjects;
-using SpawnDev.BlazorJS.TransformersJS.Demo.Renderers;
+using SpawnDev.BlazorJS.MultiView;
 using SpawnDev.BlazorJS.TransformersJS.Demo.Services;
 
 namespace SpawnDev.BlazorJS.TransformersJS.Demo.Components
