@@ -53,10 +53,11 @@
     double scale = 0.5d;
     double fps = 0;
     Stopwatch sw = Stopwatch.StartNew();
-    bool stopButtonDisabled => transformStream == null;
-    bool startButtonDisabled => transformStream != null;
+    bool stopButtonDisabled => transformStream == null || busy;
+    bool startButtonDisabled => transformStream != null || busy;
     string? camErrorMessage = null;
     double frameCount = 0;
+    bool busy = false;
 
     Dictionary<string, ModelLoadProgress> ModelProgresses = new();
     ActionCallback<ModelLoadProgress>? OnProgress = null;
@@ -128,6 +129,7 @@
         Stop();
         try
         {
+            busy = true;
             camErrorMessage = "";
             StateHasChanged();
             if (pipeline == null)
@@ -157,6 +159,10 @@
             camErrorMessage = $"Camera access failed: {ex.Message}";
             JS.Log($"Start failed: {ex.Message}");
             Stop();
+        }
+        finally
+        {
+            busy = false;
         }
     }
     async Task Transformer_Transform(VideoFrame rgbFrame, TransformStreamDefaultController controller)

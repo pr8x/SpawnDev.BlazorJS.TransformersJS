@@ -88,8 +88,8 @@
     double scale = 0.5d;
     double fps = 0;
     Stopwatch sw = Stopwatch.StartNew();
-    bool stopButtonDisabled => false;
-    bool startButtonDisabled => !initComplete;
+    bool stopButtonDisabled => string.IsNullOrEmpty(videoUrlObject) || busy;
+    bool startButtonDisabled => !initComplete || sourceFile == null || !string.IsNullOrEmpty(videoUrlObject) || busy;
     string? camErrorMessage = null;
     double frameCount = 0;
     MultiviewRenderer? activeRenderer => Renderers[RendererIndex];
@@ -99,6 +99,7 @@
     int RendererIndex = 0;
     bool initComplete = false;
     List<MultiviewRenderer> Renderers = new List<MultiviewRenderer>();
+    bool busy = false;
 
     Dictionary<string, ModelLoadProgress> ModelProgresses = new();
     ActionCallback<ModelLoadProgress>? OnProgress = null;
@@ -244,6 +245,7 @@
         Stop();
         try
         {
+            busy = true;
             camErrorMessage = "";
             StateHasChanged();
             if (pipeline == null)
@@ -251,16 +253,23 @@
                 var transformers = await Transformers.Init();
                 pipeline = await transformers.DepthEstimationPipeline(model, new PipelineOptions { Device = UseWebGPU ? "webgpu" : null, OnProgress = OnProgress });
             }
-            videoUrlObject = sourceFile == null ? null : URL.CreateObjectURL(sourceFile);
-            video.Src = videoUrlObject;
-            video.Load();
-            await video.Play();
+            if (sourceFile != null)
+            {
+                videoUrlObject = sourceFile == null ? null : URL.CreateObjectURL(sourceFile);
+                video.Src = videoUrlObject;
+                video.Load();
+                await video.Play();
+            }
         }
         catch (Exception ex)
         {
-            camErrorMessage = $"Camera access failed: {ex.Message}";
+            camErrorMessage = $"Video play failed: {ex.Message}";
             JS.Log($"Start failed: {ex.Message}");
             Stop();
+        }
+        finally
+        {
+            busy = false;
         }
     }
     bool UpdateCallbackRunning = false;
@@ -313,7 +322,7 @@
             Console.WriteLine($"UpdateCallback error: {ex.Message}");
         }
         finally
-        {            
+        {
             // update fps
             frameCount += 1;
             var elapsedSeconds = sw.Elapsed.TotalSeconds;

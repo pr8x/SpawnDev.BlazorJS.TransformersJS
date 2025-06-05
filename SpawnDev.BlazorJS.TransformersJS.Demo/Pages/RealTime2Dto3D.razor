@@ -79,8 +79,8 @@
     double scale = 0.5d;
     double fps = 0;
     Stopwatch sw = Stopwatch.StartNew();
-    bool stopButtonDisabled => transformStream == null;
-    bool startButtonDisabled => transformStream != null || !initComplete;
+    bool stopButtonDisabled => transformStream == null || busy;
+    bool startButtonDisabled => transformStream != null || !initComplete || busy;
     string? camErrorMessage = null;
     double frameCount = 0;
     MultiviewRenderer? activeRenderer => Renderers[RendererIndex];
@@ -89,6 +89,7 @@
     int AnaglyphProfile = 0;
     int RendererIndex = 0;
     bool initComplete = false;
+    bool busy = false;
     List<MultiviewRenderer> Renderers = new List<MultiviewRenderer>();
 
     Dictionary<string, ModelLoadProgress> ModelProgresses = new();
@@ -192,6 +193,7 @@
         Stop();
         try
         {
+            busy = true;
             camErrorMessage = "";
             StateHasChanged();
             if (pipeline == null)
@@ -221,6 +223,10 @@
             camErrorMessage = $"Camera access failed: {ex.Message}";
             JS.Log($"Start failed: {ex.Message}");
             Stop();
+        }
+        finally
+        {
+            busy = false;
         }
     }
     async Task Transformer_Transform(VideoFrame rgbFrame, TransformStreamDefaultController controller)
