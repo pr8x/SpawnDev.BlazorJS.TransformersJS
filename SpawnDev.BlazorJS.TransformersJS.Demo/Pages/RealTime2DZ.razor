@@ -29,6 +29,9 @@
         <button disabled="@startButtonDisabled" @onclick=@(() => Start())>Start</button>
         <button disabled="@stopButtonDisabled" @onclick=@(() => Stop())>Stop</button>
     </div>
+    <div style="padding: 0.5rem 0; max-width: 600px;">
+        <ModelLoadView ModelProgresses="@ModelProgresses" />
+    </div>
 </div>
 
 @code {
@@ -90,15 +93,9 @@
         {
             window = JS.Get<Window>("window");
             video = new HTMLVideoElement(videoRef);
-
-            var transformers = await Transformers.Init();
-
             scaleEl = new HTMLInputElement(scaleRef);
             scaleEl.OnChange += Scale_OnChange;
-
             OnProgress ??= new ActionCallback<ModelLoadProgress>(Pipeline_OnProgress);
-            pipeline = await transformers.DepthEstimationPipeline(model, new PipelineOptions { Device = UseWebGPU ? "webgpu" : null, OnProgress = OnProgress });
-
             transformerCallbacks = new TransformStreamCallbacks(transform: Transformer_Transform);
         }
     }
@@ -133,6 +130,11 @@
         {
             camErrorMessage = "";
             StateHasChanged();
+            if (pipeline == null)
+            {
+                var transformers = await Transformers.Init();
+                pipeline = await transformers.DepthEstimationPipeline(model, new PipelineOptions { Device = UseWebGPU ? "webgpu" : null, OnProgress = OnProgress });
+            }
             using var navigator = JS.Get<Navigator>("navigator");
             stream = await navigator.MediaDevices.GetUserMedia(new { video = true });
             if (stream != null)

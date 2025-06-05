@@ -1,13 +1,16 @@
-﻿@implements IDisposable
-@foreach (var progress in ModelProgresses.Values)
-{
-    <div>
-        <ProgressBar Label="@($"{progress.Name}/{progress.File} {BytesToHumanReadable(progress.Loaded ?? 0)}/{BytesToHumanReadable(progress.Total ?? 0)}")" Progress="@(progress.Status == "done" ? 100 : progress.Progress ?? 0)" />
-    </div>
-}
+﻿<div style="@(DisplayIt ? "" : "display: none;")">
+    @foreach (var progress in ModelProgresses.Values)
+    {
+        <div>
+            <ProgressBar Label="@($"{progress.Name}/{progress.File} {BytesToHumanReadable(progress.Loaded ?? 0)}/{BytesToHumanReadable(progress.Total ?? 0)}")" Progress="@(progress.Status == "done" ? 100 : progress.Progress ?? 0)" />
+        </div>
+    }
+</div>
 @code {
     [Parameter]
     public Dictionary<string, ModelLoadProgress> ModelProgresses { get; set; } = new();
+
+    bool DisplayIt => ModelProgresses.Any(o => o.Value.Progress > 0d && o.Value.Progress < 100d);
 
     public static string BytesToHumanReadable(long bytes)
     {
@@ -20,9 +23,5 @@
             len = len / 1024;
         }
         return $"{len:0.##} {sizes[order]}";
-    }
-    public void Dispose()
-    {
-        
     }
 }

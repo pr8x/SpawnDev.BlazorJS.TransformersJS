@@ -57,6 +57,9 @@
         <button disabled="@startButtonDisabled" @onclick=@(() => Start())>Start</button>
         <button disabled="@stopButtonDisabled" @onclick=@(() => Stop())>Stop</button>
     </div>
+    <div style="padding: 0.5rem 0; max-width: 600px;">
+        <ModelLoadView ModelProgresses="@ModelProgresses" />
+    </div>
 </div>
 
 @code {
@@ -132,8 +135,7 @@
             level3DEl.OnChange += Level_OnChange;
             // depth estimation pipeline initialization
             OnProgress = new ActionCallback<ModelLoadProgress>(Pipeline_OnProgress);
-            var transformers = await Transformers.Init();
-            pipeline = await transformers.DepthEstimationPipeline(model, new PipelineOptions { Device = UseWebGPU ? "webgpu" : null, OnProgress = OnProgress });
+
             initComplete = true;
             RequeueUpdate();
             StateHasChanged();
@@ -244,6 +246,11 @@
         {
             camErrorMessage = "";
             StateHasChanged();
+            if (pipeline == null)
+            {
+                var transformers = await Transformers.Init();
+                pipeline = await transformers.DepthEstimationPipeline(model, new PipelineOptions { Device = UseWebGPU ? "webgpu" : null, OnProgress = OnProgress });
+            }
             videoUrlObject = sourceFile == null ? null : URL.CreateObjectURL(sourceFile);
             video.Src = videoUrlObject;
             video.Load();
