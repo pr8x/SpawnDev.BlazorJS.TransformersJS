@@ -1,10 +1,10 @@
 ﻿using Microsoft.JSInterop;
-using SpawnDev.BlazorJS.JSObjects;
+using SpawnDev.BlazorJS.TransformersJS.ONNX;
 
 namespace SpawnDev.BlazorJS.TransformersJS
 {
     /// <summary>
-    /// 
+    /// Transformers.js Tensor proxy wraps the underlying runtime Tensor, such as an ONNX Runtime Tensor (ORT Tensor)
     /// </summary>
     public class TensorProxy : JSObject
     {
@@ -14,18 +14,18 @@ namespace SpawnDev.BlazorJS.TransformersJS
         /// <param name="_ref"></param>
         public TensorProxy(IJSInProcessObjectReference _ref) : base(_ref) { }
         /// <summary>
-        /// 
+        /// Returns the ORT Tensor if this tensor proxy wraps one
         /// </summary>
-        public virtual Tensor OrtTensor => JSRef!.Get<Tensor>("ort_tensor");
+        public virtual Tensor? OrtTensor => JSRef!.Get<Tensor?>("ort_tensor");
         /// <summary>
-        /// 
+        /// Returns the ORT Tensor if this tensor proxy wraps one
         /// </summary>
         /// <typeparam name="TData"></typeparam>
         /// <returns></returns>
-        public Tensor<TData> Get_OrtTensor<TData>() => JSRef!.Get<Tensor<TData>>("ort_tensor");
+        public Tensor<TData>? Get_OrtTensor<TData>() => JSRef!.Get<Tensor<TData>?>("ort_tensor");
     }
     /// <summary>
-    /// 
+    /// Transformers.js Tensor proxy wraps the underlying runtime Tensor, such as an ONNX Runtime Tensor (ORT Tensor)
     /// </summary>
     /// <typeparam name="TData"></typeparam>
     public class TensorProxy<TData> : TensorProxy
@@ -36,8 +36,8 @@ namespace SpawnDev.BlazorJS.TransformersJS
         /// <param name="_ref"></param>
         public TensorProxy(IJSInProcessObjectReference _ref) : base(_ref) { }
         /// <summary>
-        /// 
+        /// Returns the ORT Tensor if this tensor proxy wraps one
         /// </summary>
-        public override Tensor<TData> OrtTensor => JSRef!.Get<Tensor<TData>>("ort_tensor");
+        public override Tensor<TData>? OrtTensor => JSRef!.Get<Tensor<TData>?>("ort_tensor");
     }
 }

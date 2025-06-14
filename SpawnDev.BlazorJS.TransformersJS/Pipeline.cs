@@ -4,7 +4,8 @@ namespace SpawnDev.BlazorJS.TransformersJS
 {
     /// <summary>
     /// The Pipeline class is the class from which all pipelines inherit. Refer to this class for methods shared across different pipelines.<br/>
-    /// https://huggingface.co/docs/transformers.js/api/pipelines#module_pipelines.Pipeline
+    /// https://huggingface.co/docs/transformers.js/api/pipelines#module_pipelines.Pipeline<br/>
+    /// https://huggingface.co/docs/transformers.js/api/pipelines
     /// </summary>
     public class Pipeline : JSObject
     {

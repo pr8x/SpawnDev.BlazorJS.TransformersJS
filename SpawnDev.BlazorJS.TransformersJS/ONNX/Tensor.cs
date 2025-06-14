@@ -1,8 +1,13 @@
 ﻿using Microsoft.JSInterop;
 using SpawnDev.BlazorJS.JSObjects;
 
-namespace SpawnDev.BlazorJS.TransformersJS
+namespace SpawnDev.BlazorJS.TransformersJS.ONNX
 {
+    public class RuntimeTensor : JSObject
+    {
+        /// <inheritdoc/>
+        public RuntimeTensor(IJSInProcessObjectReference _ref) : base(_ref) { }
+    }
     /// <summary>
     /// Represent multi-dimensional arrays to feed to or fetch from model inferencing.<br/>
     /// https://onnxruntime.ai/docs/api/js/interfaces/Tensor-1.html
@@ -36,7 +41,6 @@ namespace SpawnDev.BlazorJS.TransformersJS
         /// <summary>
         /// Creates a deep copy of the current Tensor.
         /// </summary>
-        /// <typeparam name="TData"></typeparam>
         /// <returns></returns>
         public override Tensor<TData> Clone() => JSRef!.Call<Tensor<TData>>("clone")!;
     }
@@ -45,7 +49,7 @@ namespace SpawnDev.BlazorJS.TransformersJS
     /// https://onnxruntime.ai/docs/api/js/interfaces/TensorConstructor.html<br/>
     /// https://onnxruntime.ai/docs/api/js/interfaces/Tensor-1.html
     /// </summary>
-    public class Tensor : JSObject
+    public class Tensor : RuntimeTensor
     {
         /// <inheritdoc/>
         public Tensor(IJSInProcessObjectReference _ref) : base(_ref) { }
@@ -75,7 +79,9 @@ namespace SpawnDev.BlazorJS.TransformersJS
         /// </summary>
         public int[] Dims => JSRef!.Get<int[]>("dims");
         /// <summary>
-        /// Type of the tensor.
+        /// Type of the tensor.<br/>
+        /// Example:
+        /// - "float32"<br/>
         /// </summary>
         public string Type => JSRef!.Get<string>("type");
         /// <summary>
@@ -157,7 +163,7 @@ namespace SpawnDev.BlazorJS.TransformersJS
         /// </summary>
         /// <param name="dims">New dimensions. Size should match the old one.</param>
         /// <returns></returns>
-        public virtual Tensor Reshape(IEnumerable<int> dims) => (Tensor)JSRef!.Call(this.GetType(), "reshape", dims)!;
+        public virtual Tensor Reshape(IEnumerable<int> dims) => (Tensor)JSRef!.Call(GetType(), "reshape", dims)!;
         /// <summary>
         /// Create a new tensor with the same data buffer and specified dims.
         /// </summary>
@@ -170,7 +176,7 @@ namespace SpawnDev.BlazorJS.TransformersJS
         /// Creates a deep copy of the current Tensor.
         /// </summary>
         /// <returns>A new Tensor with the same type, data, and dimensions as the original.</returns>
-        public virtual Tensor Clone() => (Tensor)JSRef!.Call(this.GetType(), "clone")!;
+        public virtual Tensor Clone() => (Tensor)JSRef!.Call(GetType(), "clone")!;
         /// <summary>
         /// Creates a deep copy of the current Tensor.
         /// </summary>

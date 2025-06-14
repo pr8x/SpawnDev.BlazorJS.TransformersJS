@@ -4,7 +4,7 @@ namespace SpawnDev.BlazorJS.TransformersJS
 {
     /// <summary>
     /// https://huggingface.co/docs/transformers.js/api/pipelines#pipelinesdepthestimationpipeline<br/>
-    /// https://github.com/huggingface/transformers.js/blob/6f43f244e04522545d3d939589c761fdaff057d4/src/pipelines.js#L2908
+    /// https://github.com/huggingface/transformers.js/blob/6f43f244e04522545d3d939589c761fdaff057d4/src/pipelines.js#L2908<br/>
     /// </summary>
     public class DepthEstimationPipeline : Pipeline
     {

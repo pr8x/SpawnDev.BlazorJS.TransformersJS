@@ -11,7 +11,9 @@ namespace SpawnDev.BlazorJS.TransformersJS
         public DepthEstimationResult(IJSInProcessObjectReference _ref) : base(_ref) { }
 
         public DepthEstimationDepth Depth => JSRef!.Get<DepthEstimationDepth>("depth");
-
-        public DepthEstimationPredictedDepth PredictedDepth => JSRef!.Get<DepthEstimationPredictedDepth>("predicted_depth");
+        /// <summary>
+        /// The raw depth map predicted by the model.
+        /// </summary>
+        public TensorProxy PredictedDepth => JSRef!.Get<TensorProxy>("predicted_depth");
     }
 }

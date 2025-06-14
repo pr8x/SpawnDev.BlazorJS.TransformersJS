@@ -1,4 +1,5 @@
 ﻿using Microsoft.JSInterop;
+using SpawnDev.BlazorJS.JSObjects;
 
 namespace SpawnDev.BlazorJS.TransformersJS
 {
@@ -49,6 +50,31 @@ namespace SpawnDev.BlazorJS.TransformersJS
             // set transformers.js module to a global variable
             JS.Set(GlobalModuleName, transformers);
             return transformers;
+        }
+        static bool? hasFp16 = null;
+        /// <summary>
+        /// Returns true if the WebGPU adapter supports the shader-f16 feature, which is required for half-precision floating point (fp16) operations in shaders.
+        /// </summary>
+        /// <returns></returns>
+        public static async Task<bool> HasWebGpuFp16()
+        {
+            if (hasFp16 == null)
+            {
+                try
+                {
+                    using var navigator = JS.Get<Navigator>("navigator");
+                    using var gpu = navigator.Gpu;
+                    if (gpu != null)
+                    {
+                        using var adapter = await gpu.RequestAdapter();
+                        using var features = adapter.Features;
+                        hasFp16 = features.Has("shader-f16");
+                    }
+                }
+                catch { }
+            }
+            if (hasFp16 == null) hasFp16 = false;
+            return hasFp16.Value;
         }
         //The task defining which pipeline will be returned.Currently accepted tasks are:
         //"audio-classification": will return a AudioClassificationPipeline.

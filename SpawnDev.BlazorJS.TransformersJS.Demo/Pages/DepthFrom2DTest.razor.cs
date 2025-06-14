@@ -219,6 +219,9 @@ namespace SpawnDev.BlazorJS.TransformersJS.Demo.Pages
                     break;
             }
 
+            using var predictedDepth = depthResult.PredictedDepth;
+            JS.Log("_predictedDepth", predictedDepth);
+            JS.Set("_predictedDepth", predictedDepth);
             using var depthInfo = depthResult.Depth;
             using var depthMapData = depthInfo.Data;
             var rgbWidth = depthInfo.Width;
