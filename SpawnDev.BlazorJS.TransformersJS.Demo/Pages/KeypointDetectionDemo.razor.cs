@@ -1,7 +1,5 @@
 ﻿using Microsoft.AspNetCore.Components;
 using SpawnDev.BlazorJS.JSObjects;
-using SpawnDev.BlazorJS.WebWorkers;
-using System.Reflection;
 using File = SpawnDev.BlazorJS.JSObjects.File;
 
 namespace SpawnDev.BlazorJS.TransformersJS.Demo.Pages
@@ -10,9 +8,6 @@ namespace SpawnDev.BlazorJS.TransformersJS.Demo.Pages
     {
         [Inject]
         BlazorJSRuntime JS { get; set; } = default!;
-
-        [Inject]
-        WebWorkerService WebWorkerService { get; set; } = default!;
 
         bool beenInit = false;
         bool busy = true;

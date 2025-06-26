@@ -4,14 +4,12 @@ using SpawnDev.BlazorJS;
 using SpawnDev.BlazorJS.TransformersJS.Demo;
 using SpawnDev.BlazorJS.TransformersJS.Demo.Layout.AppTray;
 using SpawnDev.BlazorJS.TransformersJS.Demo.Layout;
-using SpawnDev.BlazorJS.WebWorkers;
 using Radzen;
 using SpawnDev.BlazorJS.TransformersJS.Demo.Services;
 
 var builder = WebAssemblyHostBuilder.CreateDefault(args);
 
 builder.Services.AddBlazorJSRuntime(out var JS);
-builder.Services.AddWebWorkerService();
 
 if (JS.IsWindow)
 {

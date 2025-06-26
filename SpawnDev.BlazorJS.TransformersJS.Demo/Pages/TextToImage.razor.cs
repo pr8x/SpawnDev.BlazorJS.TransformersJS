@@ -1,8 +1,5 @@
 ﻿using Microsoft.AspNetCore.Components;
-using Microsoft.AspNetCore.Components.Forms;
-using Microsoft.Extensions.Options;
 using SpawnDev.BlazorJS.JSObjects;
-using SpawnDev.BlazorJS.WebWorkers;
 using File = SpawnDev.BlazorJS.JSObjects.File;
 
 
@@ -12,9 +9,6 @@ namespace SpawnDev.BlazorJS.TransformersJS.Demo.Pages
     {
         [Inject]
         BlazorJSRuntime JS { get; set; } = default!;
-
-        [Inject]
-        WebWorkerService WebWorkerService { get; set; } = default!;
 
         public string TextBoxValue { get; set; } = "";
 
