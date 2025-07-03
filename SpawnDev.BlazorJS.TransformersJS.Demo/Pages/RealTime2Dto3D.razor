@@ -102,8 +102,8 @@
             window = JS.Get<Window>("window");
             video = new HTMLVideoElement(videoRef);
             // Anaglyph renderer initialization
-            Renderers.Add(new AnaglyphRenderer { ProfileIndex = 0 });
-            Renderers.Add(new AnaglyphRenderer { ProfileIndex = 1 });
+            Renderers.Add(new RenderAnaglyph { ProfileIndex = 0 });
+            Renderers.Add(new RenderAnaglyph { ProfileIndex = 1 });
             // setup the sliders and their change events
             scaleEl = new HTMLInputElement(scaleRef);
             scaleEl.OnChange += Scale_OnChange;
@@ -254,13 +254,17 @@
 
             // Run the depth estimation pipeline on the RGB image
             using var depthResult = await pipeline!.Call(rgbImage);
+            using var depth = depthResult.Depth;
 
-            // Merge the 2D image and the depth result into a single canvas
-            using var rgbZCanvas = Merge2DWithDepthToCanvas2DZ(rgbFrame, depthResult);
+            SourceWidth = rgbWidth;
+            SourceHeight = rgbHeight;
+            DepthWidth = depthWidth;
+            DepthHeight = depthHeight;
 
             activeRenderer.Level3D = Level3D;
             activeRenderer.Focus3D = Focus3D;
-            activeRenderer.SetInput(rgbZCanvas, "2dz");
+            activeRenderer.SetInput(rgbCanvas);
+            activeRenderer.SetDepth(depth.Width, depth.Height, depth.Data);
             activeRenderer.Render();
 
             rgbCanvas.Width = activeRenderer.OutWidth;
@@ -301,39 +305,39 @@
     int SourceHeight = 0;
     int DepthWidth = 0;
     int DepthHeight = 0;
-    OffscreenCanvas Merge2DWithDepthToCanvas2DZ(VideoFrame rgbFrame, DepthEstimationResult depthEstimationResult)
-    {
-        using var depthEstimation = depthEstimationResult.Depth;
-        using var grayscale1BPPData = depthEstimation.Data;
-        var depthWidth = depthEstimation.Width;
-        var depthHeight = depthEstimation.Height;
-        var width = rgbFrame.DisplayWidth;
-        var height = rgbFrame.DisplayHeight;
-        var outWidth = width * 2;
-        var outHeight = height;
-        SourceWidth = width;
-        SourceHeight = height;
-        DepthWidth = depthWidth;
-        DepthHeight = depthHeight;
-        var grayscaleDataBytes = grayscale1BPPData.ReadBytes();
-        // Convert the 1BPP grayscale data to RGBA format
-        var depthmapRGBABytes = Grayscale1BPPToRGBA(grayscaleDataBytes, depthWidth, depthHeight);
-        // Create an ImageData object from the depth bytes
-        using var depthImageData = ImageData.FromBytes(depthmapRGBABytes, depthWidth, depthHeight);
-        // Create an OffscreenCanvas for the depth map ImageData
-        using var depthCanvas = new OffscreenCanvas(depthWidth, depthHeight);
-        using var depthCtx = depthCanvas.Get2DContext();
-        // Draw the depth map ImageData onto the OffscreenCanvas
-        depthCtx.PutImageData(depthImageData, 0, 0);
-        // Create an OffscreenCanvas for the final output
-        var canvas = new OffscreenCanvas(outWidth, outHeight);
-        using var ctx = canvas.Get2DContext();
-        // draw rgb image
-        ctx.DrawImage(rgbFrame, 0, 0, width, height);
-        // draw depth map
-        ctx.DrawImage(depthCanvas, width, 0, width, height);
-        return canvas;
-    }
+    // OffscreenCanvas Merge2DWithDepthToCanvas2DZ(VideoFrame rgbFrame, DepthEstimationResult depthEstimationResult)
+    // {
+    //     using var depthEstimation = depthEstimationResult.Depth;
+    //     using var grayscale1BPPData = depthEstimation.Data;
+    //     var depthWidth = depthEstimation.Width;
+    //     var depthHeight = depthEstimation.Height;
+    //     var width = rgbFrame.DisplayWidth;
+    //     var height = rgbFrame.DisplayHeight;
+    //     var outWidth = width * 2;
+    //     var outHeight = height;
+    //     SourceWidth = width;
+    //     SourceHeight = height;
+    //     DepthWidth = depthWidth;
+    //     DepthHeight = depthHeight;
+    //     var grayscaleDataBytes = grayscale1BPPData.ReadBytes();
+    //     // Convert the 1BPP grayscale data to RGBA format
+    //     var depthmapRGBABytes = Grayscale1BPPToRGBA(grayscaleDataBytes, depthWidth, depthHeight);
+    //     // Create an ImageData object from the depth bytes
+    //     using var depthImageData = ImageData.FromBytes(depthmapRGBABytes, depthWidth, depthHeight);
+    //     // Create an OffscreenCanvas for the depth map ImageData
+    //     using var depthCanvas = new OffscreenCanvas(depthWidth, depthHeight);
+    //     using var depthCtx = depthCanvas.Get2DContext();
+    //     // Draw the depth map ImageData onto the OffscreenCanvas
+    //     depthCtx.PutImageData(depthImageData, 0, 0);
+    //     // Create an OffscreenCanvas for the final output
+    //     var canvas = new OffscreenCanvas(outWidth, outHeight);
+    //     using var ctx = canvas.Get2DContext();
+    //     // draw rgb image
+    //     ctx.DrawImage(rgbFrame, 0, 0, width, height);
+    //     // draw depth map
+    //     ctx.DrawImage(depthCanvas, width, 0, width, height);
+    //     return canvas;
+    // }
     byte[] Grayscale1BPPToRGBA(byte[] grayscaleData, int width, int height)
     {
         var ret = new byte[width * height * 4];

@@ -39,7 +39,7 @@ namespace SpawnDev.BlazorJS.TransformersJS.Demo.Components
 
         public string GeneratedSource => string.IsNullOrEmpty(_GeneratedSource) ? Source : _GeneratedSource;
 
-        AnaglyphRenderer? anaglyphRenderer { get; set; }
+        RenderAnaglyph? anaglyphRenderer { get; set; }
 
         string _GeneratedSource = "";
         public bool Processing { get; set; }
@@ -90,21 +90,20 @@ namespace SpawnDev.BlazorJS.TransformersJS.Demo.Components
             try
             {
                 canvas ??= new HTMLCanvasElement(canvasElRef);
-                anaglyphRenderer ??= new AnaglyphRenderer(canvas);
+                anaglyphRenderer ??= new RenderAnaglyph(canvas);
                 ProcessingFailed = false;
                 Processing = true;
                 await ProgressChanged.InvokeAsync(true);
-                if (!DepthEstimationService.Cached2DZImages.ContainsKey(Source))
-                {
-                    using var image = await HTMLImageElement.CreateFromImageAsync(Source);
-                    anaglyphRenderer.SetInput(image, "2d");
-                    anaglyphRenderer.Render();
-                }
-                var imageWithDepth = await DepthEstimationService.ImageTo2DZImage(Source);
+                using var image = await HTMLImageElement.CreateFromImageAsync(Source);
+                var depthEstimationPipeline = await DepthEstimationService.GetDepthEstimationPipeline();
+                using var rawImage = await RawImage.FromURL(Source);
+                using var depthResult = await depthEstimationPipeline.Call(rawImage);
+                using var depth = depthResult.Depth;
                 anaglyphRenderer.Level3D = Level3D;
                 anaglyphRenderer.Focus3D = Focus3D;
                 anaglyphRenderer.ProfileIndex = AnaglyphProfile;
-                anaglyphRenderer.SetInput(imageWithDepth, "2dz");
+                anaglyphRenderer.SetInput(image);
+                anaglyphRenderer.SetDepth(depth.Width, depth.Height, depth.Data);
                 anaglyphRenderer.Render();
             }
             catch
