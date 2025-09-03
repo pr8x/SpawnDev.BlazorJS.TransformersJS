@@ -15,14 +15,14 @@ namespace SpawnDev.BlazorJS.TransformersJS
         /// <summary>
         /// Transformers.js bundled with this library<br/>
         /// Downloaded from:<br/>
-        /// https://cdn.jsdelivr.net/npm/@huggingface/transformers@3.6.1
+        /// https://cdn.jsdelivr.net/npm/@huggingface/transformers@3.7.2
         /// </summary>
-        public static string LatestBundledVersionSrc { get; } = $"./_content/SpawnDev.BlazorJS.TransformersJS/transformers-3.6.1.js";
+        public static string LatestBundledVersionSrc { get; } = $"./_content/SpawnDev.BlazorJS.TransformersJS/transformers-3.7.2.js";
         /// <summary>
         /// Transformers.js CDN URL<br/>
         /// https://cdn.jsdelivr.net/npm/@huggingface/transformers<br/>
         /// To get a specific version use the @ tag:<br/>
-        /// https://cdn.jsdelivr.net/npm/@huggingface/transformers@3.6.1
+        /// https://cdn.jsdelivr.net/npm/@huggingface/transformers@3.7.2
         /// </summary>
         public static string LatestCDNVersionSrc { get; } = $"https://cdn.jsdelivr.net/npm/@huggingface/transformers";
         /// <summary>
