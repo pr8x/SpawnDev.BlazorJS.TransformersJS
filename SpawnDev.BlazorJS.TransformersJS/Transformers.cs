@@ -43,7 +43,7 @@ namespace SpawnDev.BlazorJS.TransformersJS
         public static async Task<Transformers> Init(string? srcUrl = null)
         {
             srcUrl = srcUrl ?? LatestBundledVersionSrc;
-            var transformers = await JS.Import<Transformers>(GlobalModuleName, LatestBundledVersionSrc);
+            var transformers = await JS.Import<Transformers>(GlobalModuleName, srcUrl);
             if (transformers == null) throw new Exception("Transformers could not be initialized.");
             return transformers;
         }
