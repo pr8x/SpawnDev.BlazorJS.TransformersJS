@@ -15,14 +15,14 @@ namespace SpawnDev.BlazorJS.TransformersJS
         /// <summary>
         /// Transformers.js bundled with this library<br/>
         /// Downloaded from:<br/>
-        /// https://cdn.jsdelivr.net/npm/@huggingface/transformers@3.7.2
+        /// https://cdn.jsdelivr.net/npm/@huggingface/transformers@3.7.3
         /// </summary>
-        public static string LatestBundledVersionSrc { get; } = $"./_content/SpawnDev.BlazorJS.TransformersJS/transformers-3.7.2.js";
+        public static string LatestBundledVersionSrc { get; } = $"./_content/SpawnDev.BlazorJS.TransformersJS/transformers-3.7.3.js";
         /// <summary>
         /// Transformers.js CDN URL<br/>
         /// https://cdn.jsdelivr.net/npm/@huggingface/transformers<br/>
         /// To get a specific version use the @ tag:<br/>
-        /// https://cdn.jsdelivr.net/npm/@huggingface/transformers@3.7.2
+        /// https://cdn.jsdelivr.net/npm/@huggingface/transformers@3.7.3
         /// </summary>
         public static string LatestCDNVersionSrc { get; } = $"https://cdn.jsdelivr.net/npm/@huggingface/transformers";
         /// <summary>
@@ -43,12 +43,8 @@ namespace SpawnDev.BlazorJS.TransformersJS
         public static async Task<Transformers> Init(string? srcUrl = null)
         {
             srcUrl = srcUrl ?? LatestBundledVersionSrc;
-            var transformers = JS.Get<Transformers>(GlobalModuleName);
-            if (transformers != null) return transformers;
-            transformers = await JS.Import<Transformers>(LatestBundledVersionSrc);
-            if (transformers == null) throw new Exception("WebTorrentService could not be initialized.");
-            // set transformers.js module to a global variable
-            JS.Set(GlobalModuleName, transformers);
+            var transformers = await JS.Import<Transformers>(GlobalModuleName, LatestBundledVersionSrc);
+            if (transformers == null) throw new Exception("Transformers could not be initialized.");
             return transformers;
         }
         static bool? hasFp16 = null;

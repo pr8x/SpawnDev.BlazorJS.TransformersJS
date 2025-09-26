@@ -1,5 +1,4 @@
 ﻿using Microsoft.AspNetCore.Components.Web;
-using Radzen;
 using SpawnDev.BlazorJS.JSObjects;
 using SpawnDev.BlazorJS.TransformersJS.Demo.Layout.AppTray;
 
