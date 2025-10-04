@@ -104,5 +104,11 @@ namespace SpawnDev.BlazorJS.TransformersJS
 
         public (int width, int height) Size => JSRef!.Get<(int width, int height)>("size");
         public Tensor ToTensor() => JSRef!.Call<Tensor>("toTensor");
+        
+        /// <summary>
+        /// Save the image to the given path.
+        /// </summary>
+        /// <param name="path">The path to save the image to.</param>
+        public void Save(string path) => JSRef!.CallVoid("save", path);
     }
 }
